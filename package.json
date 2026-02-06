@@ -21,3 +21,11 @@
     "vite": "^5.4.8"
   }
 }
+{
+  "homepage": "https://wesleyfariasb.github.io/WesleyFarias-FullStack-Developer/",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "deploy": "gh-pages -d dist"
+  }
+}
