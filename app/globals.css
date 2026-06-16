@@ -1,0 +1,510 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: "Inter", "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Montserrat", "Inter", sans-serif;
+}
+
+.page-shell {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding-inline: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .page-shell {
+    max-width: none;
+    padding-inline: 0;
+    width: 95%;
+  }
+}
+
+.solution-image {
+  animation: solution-fade 360ms ease-out both;
+}
+
+.hero-tech-shell {
+  height: min(62vw, 780px);
+  left: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: 100vw;
+  z-index: 0;
+}
+
+.hero-tech-shell::before {
+  background: linear-gradient(90deg, #ffffff 0%, rgb(255 255 255 / 96%) 39%, rgb(255 255 255 / 0%) 78%);
+  content: "";
+  inset: 0;
+  position: absolute;
+  z-index: 2;
+}
+
+.hero-tech {
+  animation: hero-tech-drift 14s ease-in-out infinite;
+  height: clamp(28rem, 52vw, 46rem);
+  position: absolute;
+  right: clamp(-4.5rem, -4vw, -1.25rem);
+  top: clamp(1rem, 2.6vw, 3rem);
+  width: clamp(40rem, 63vw, 68rem);
+  will-change: transform;
+}
+
+.hero-tech__halo {
+  background:
+    radial-gradient(circle at 42% 44%, rgb(37 99 235 / 25%), transparent 0.8rem),
+    radial-gradient(circle at 42% 44%, transparent 0 7.4rem, rgb(37 99 235 / 16%) 7.45rem 7.52rem, transparent 7.58rem),
+    radial-gradient(circle at 42% 44%, transparent 0 12.8rem, rgb(59 130 246 / 14%) 12.85rem 12.94rem, transparent 13rem),
+    radial-gradient(circle at 42% 44%, rgb(37 99 235 / 18%), rgb(96 165 250 / 9%) 36%, transparent 68%);
+  border-radius: 999px;
+  filter: blur(0.2px);
+  inset: 2% 8% 0 2%;
+  position: absolute;
+}
+
+.hero-tech__halo::after {
+  background-image:
+    linear-gradient(rgb(37 99 235 / 10%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(37 99 235 / 10%) 1px, transparent 1px);
+  background-size: 34px 34px;
+  border-radius: inherit;
+  content: "";
+  inset: 12%;
+  mask-image: radial-gradient(circle, #000 0%, transparent 66%);
+  position: absolute;
+}
+
+.hero-tech__orb {
+  border-radius: 999px;
+  position: absolute;
+  will-change: transform;
+}
+
+.hero-tech__orb--primary {
+  animation: hero-tech-pulse 5.5s ease-in-out infinite;
+  background:
+    radial-gradient(circle at 36% 28%, #ffffff 0 9%, rgb(191 219 254 / 78%) 10% 20%, transparent 21%),
+    linear-gradient(135deg, #1d4ed8, #60a5fa 52%, #dbeafe);
+  box-shadow: 0 34px 90px rgb(37 99 235 / 28%);
+  height: 12rem;
+  left: 34%;
+  top: 26%;
+  width: 12rem;
+}
+
+.hero-tech__orb--secondary {
+  animation: hero-tech-pulse 6.5s ease-in-out infinite reverse;
+  background: linear-gradient(135deg, rgb(37 99 235 / 18%), rgb(147 197 253 / 46%));
+  border: 1px solid rgb(37 99 235 / 16%);
+  height: 7.5rem;
+  right: 19%;
+  top: 11%;
+  width: 7.5rem;
+}
+
+.hero-tech__ring {
+  border: 1px solid rgb(37 99 235 / 22%);
+  border-radius: 999px;
+  position: absolute;
+}
+
+.hero-tech__ring--one {
+  animation: hero-tech-spin 28s linear infinite;
+  height: 70%;
+  left: 12%;
+  top: 10%;
+  transform: rotate(18deg);
+  width: 72%;
+}
+
+.hero-tech__ring--two {
+  animation: hero-tech-spin 36s linear infinite reverse;
+  border-style: dashed;
+  height: 48%;
+  right: 9%;
+  top: 28%;
+  transform: rotate(-12deg);
+  width: 54%;
+}
+
+.hero-tech__ring--three {
+  animation: hero-tech-spin 42s linear infinite;
+  border-color: rgb(96 165 250 / 18%);
+  height: 36%;
+  left: 45%;
+  top: 44%;
+  transform: rotate(28deg);
+  width: 42%;
+}
+
+.hero-tech__panel {
+  background: rgb(255 255 255 / 74%);
+  border: 1px solid rgb(37 99 235 / 12%);
+  border-radius: 22px;
+  box-shadow: 0 24px 70px rgb(37 99 235 / 10%);
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem;
+  position: absolute;
+  width: 12rem;
+}
+
+.hero-tech__panel span {
+  background: linear-gradient(90deg, rgb(37 99 235 / 42%), rgb(191 219 254 / 42%));
+  border-radius: 999px;
+  display: block;
+  height: 0.55rem;
+}
+
+.hero-tech__panel span:nth-child(2) {
+  width: 72%;
+}
+
+.hero-tech__panel span:nth-child(3) {
+  width: 46%;
+}
+
+.hero-tech__panel--one {
+  animation: hero-tech-card 8s ease-in-out infinite;
+  left: 17%;
+  top: 17%;
+}
+
+.hero-tech__panel--two {
+  animation: hero-tech-card 9s ease-in-out infinite reverse;
+  bottom: 16%;
+  right: 13%;
+  width: 9.5rem;
+}
+
+.hero-tech__node {
+  background: #2563eb;
+  border: 4px solid #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 14px 28px rgb(37 99 235 / 22%);
+  height: 1rem;
+  position: absolute;
+  width: 1rem;
+}
+
+.hero-tech__node--one {
+  left: 21%;
+  top: 56%;
+}
+
+.hero-tech__node--two {
+  left: 50%;
+  top: 13%;
+}
+
+.hero-tech__node--three {
+  right: 24%;
+  top: 56%;
+}
+
+.hero-tech__node--four {
+  bottom: 18%;
+  left: 45%;
+}
+
+.project-marquee-shell {
+  position: relative;
+}
+
+.project-marquee-shell::before,
+.project-marquee-shell::after {
+  bottom: 0;
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: clamp(3rem, 8vw, 7rem);
+  z-index: 8;
+}
+
+.project-marquee-shell::before {
+  background: linear-gradient(90deg, #ffffff 0%, rgb(255 255 255 / 0%) 100%);
+  left: 0;
+}
+
+.project-marquee-shell::after {
+  background: linear-gradient(270deg, #ffffff 0%, rgb(255 255 255 / 0%) 100%);
+  right: 0;
+}
+
+.project-marquee {
+  cursor: grab;
+  overflow: hidden;
+  padding-block: 0.15rem;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.project-marquee:active {
+  cursor: grabbing;
+}
+
+.project-marquee__track {
+  display: flex;
+  gap: 1.25rem;
+  width: max-content;
+  will-change: transform;
+}
+
+.project-marquee__item {
+  flex: 0 0 clamp(20rem, 31vw, 34rem);
+}
+
+.project-marquee__control {
+  align-items: center;
+  background: rgb(255 255 255 / 84%);
+  border: 1px solid rgb(17 17 17 / 10%);
+  border-radius: 999px;
+  box-shadow: 0 16px 36px rgb(17 17 17 / 8%);
+  color: #111111;
+  display: flex;
+  height: 2.7rem;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+  width: 2.7rem;
+  z-index: 12;
+}
+
+.project-marquee__control:hover,
+.project-marquee__control:focus-visible {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  outline: none;
+}
+
+.project-marquee__control:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.project-marquee__control--prev {
+  left: 0.85rem;
+}
+
+.project-marquee__control--next {
+  right: 0.85rem;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(100deg, #f0f1f3 0%, #fafafa 42%, #e9edf4 70%, #f0f1f3 100%);
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.marquee {
+  overflow: hidden;
+  position: relative;
+}
+
+.marquee::before,
+.marquee::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.marquee::before {
+  left: 0;
+  background: linear-gradient(90deg, #ffffff 0%, rgb(255 255 255 / 0%) 100%);
+}
+
+.marquee::after {
+  right: 0;
+  background: linear-gradient(270deg, #ffffff 0%, rgb(255 255 255 / 0%) 100%);
+}
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  animation: marquee 18s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-tech,
+  .hero-tech__orb,
+  .hero-tech__ring,
+  .hero-tech__panel {
+    animation: none;
+  }
+
+  .marquee__track {
+    animation: none;
+  }
+
+  .skeleton-shimmer {
+    animation: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hero-tech-shell {
+    height: 34rem;
+    opacity: 0.46;
+  }
+
+  .hero-tech-shell::before {
+    background: linear-gradient(90deg, #ffffff 0%, rgb(255 255 255 / 98%) 48%, rgb(255 255 255 / 20%) 100%);
+  }
+
+  .hero-tech {
+    height: 31rem;
+    right: -15rem;
+    top: 0.5rem;
+    width: 47rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-tech-shell {
+    height: 29rem;
+    opacity: 0.28;
+  }
+
+  .hero-tech {
+    height: 27rem;
+    right: -21.5rem;
+    top: 2.25rem;
+    width: 41rem;
+  }
+
+  .hero-tech__panel {
+    display: none;
+  }
+
+  .hero-tech__orb--primary {
+    height: 8rem;
+    width: 8rem;
+  }
+
+  .hero-tech__orb--secondary {
+    height: 5.6rem;
+    width: 5.6rem;
+  }
+
+  .project-marquee__item {
+    flex-basis: 82vw;
+  }
+
+  .project-marquee__control {
+    height: 2.35rem;
+    width: 2.35rem;
+  }
+
+  .project-marquee__control--prev {
+    left: 0.35rem;
+  }
+
+  .project-marquee__control--next {
+    right: 0.35rem;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes hero-tech-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-1.15rem, 0.9rem, 0) rotate(-1.4deg);
+  }
+}
+
+@keyframes hero-tech-pulse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0.65rem, -0.4rem, 0) scale(1.045);
+  }
+}
+
+@keyframes hero-tech-spin {
+  0% {
+    rotate: 0deg;
+  }
+  100% {
+    rotate: 360deg;
+  }
+}
+
+@keyframes hero-tech-card {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0.7rem, -0.55rem, 0);
+  }
+}
+
+@keyframes solution-fade {
+  0% {
+    opacity: 0;
+    transform: scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 160% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
