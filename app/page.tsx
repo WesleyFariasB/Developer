@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from "react";
 import AOS from "aos";
+import FloatingAssistant from "@/components/FloatingAssistant";
 
 type NavLink = {
   label: string;
@@ -30,8 +31,7 @@ type Project = {
   images: ProjectImage[];
 };
 
-const siteBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const imagePath = (fileName: string) => `${siteBasePath}/images/${fileName}`;
+const imagePath = (fileName: string) => `/images/${fileName}`;
 
 const navLinks: NavLink[] = [
   { label: "Projetos", href: "#projetos" },
@@ -173,6 +173,7 @@ const projectShowcase: Project[] = [
 
 const projectLoopCopies = 3;
 const projectDragThreshold = 8;
+const serviceAutoAdvanceDuration = 5200;
 
 const projectMarqueeRows = [
   [0, 1, 2],
@@ -294,6 +295,8 @@ export default function Home() {
   const [activeProjectIndex, setActiveProjectIndex] = useState<number | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [activeServiceIndex, setActiveServiceIndex] = useState(0);
+  const [isServicesInView, setIsServicesInView] = useState(false);
+  const [serviceProgressKey, setServiceProgressKey] = useState(0);
   const [metricValues, setMetricValues] = useState(() => aboutMetrics.map(() => 0));
   const [isLoading, setIsLoading] = useState(true);
   const projectTrackRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -321,8 +324,6 @@ export default function Home() {
       activeProjectIndex !== null ? projectShowcase[activeProjectIndex] : null,
     [activeProjectIndex],
   );
-
-  const activeService = services[activeServiceIndex] ?? services[0];
 
   useEffect(() => {
     AOS.init({ once: false, mirror: true, duration: 900, easing: "ease-out-cubic" });
@@ -509,6 +510,11 @@ export default function Home() {
     [openProjectModal],
   );
 
+  const selectService = useCallback((index: number) => {
+    setActiveServiceIndex(index);
+    setServiceProgressKey((key) => key + 1);
+  }, []);
+
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const tracks = projectTrackRefs.current.filter(Boolean) as HTMLDivElement[];
@@ -597,8 +603,12 @@ export default function Home() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        const isVisible = entry.isIntersecting;
+        setIsServicesInView(isVisible);
+
+        if (isVisible) {
           setActiveServiceIndex(0);
+          setServiceProgressKey((key) => key + 1);
         }
       },
       { threshold: 0.35 },
@@ -607,6 +617,17 @@ export default function Home() {
     observer.observe(section);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!isServicesInView) return undefined;
+
+    const timeout = window.setTimeout(() => {
+      setActiveServiceIndex((index) => (index + 1) % services.length);
+      setServiceProgressKey((key) => key + 1);
+    }, serviceAutoAdvanceDuration);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeServiceIndex, isServicesInView, serviceProgressKey]);
 
   useEffect(() => {
     const section = aboutSectionRef.current;
@@ -711,7 +732,7 @@ export default function Home() {
         data-aos="fade-down"
       >
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/20 text-lg font-bold transition-transform duration-200 hover:scale-[1.03]">
+          <span className="brand-mark brand-mark--site">
             W
           </span>
         </div>
@@ -785,7 +806,6 @@ export default function Home() {
                         sizes="28px"
                         className="object-cover"
                         quality={100}
-                        unoptimized
                       />
                     </span>
                   ))}
@@ -954,7 +974,6 @@ export default function Home() {
                                 className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                                 quality={100}
                                 priority={rowIndex === 0 && copyIndex === 0 && projectIndex < 2}
-                                unoptimized
                               />
                             </div>
                             <div className="absolute inset-x-0 bottom-0 translate-y-3 bg-gradient-to-t from-ink/80 via-ink/45 to-transparent p-5 pt-16 text-white opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
@@ -988,17 +1007,26 @@ export default function Home() {
 
           <div className="mt-4 grid items-stretch gap-10 lg:grid-cols-2">
             <div className="relative min-h-[340px] overflow-hidden rounded-[28px] bg-fog md:min-h-[480px] lg:h-full lg:min-h-0">
-              <Image
-                key={activeService.visual.src}
-                src={activeService.visual.src}
-                alt={activeService.visual.alt}
-                fill
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                className="solution-image object-cover"
-                quality={100}
-                loading="lazy"
-                unoptimized
-              />
+              {services.map((service, index) => {
+                const isActive = activeServiceIndex === index;
+
+                return (
+                  <Image
+                    key={service.visual.src}
+                    src={service.visual.src}
+                    alt={isActive ? service.visual.alt : ""}
+                    aria-hidden={!isActive}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 40vw"
+                    className={`solution-image object-cover transition-[opacity,transform] duration-500 ease-out ${
+                      isActive ? "scale-100 opacity-100" : "scale-[1.015] opacity-0"
+                    }`}
+                    quality={100}
+                    loading={index === 0 ? undefined : "lazy"}
+                    priority={index === 0}
+                  />
+                );
+              })}
             </div>
 
             <div className="space-y-8">
@@ -1010,12 +1038,13 @@ export default function Home() {
               <div>
                 {services.map((service, index) => {
                   const isActive = activeServiceIndex === index;
+                  const shouldAnimateProgress = isActive && isServicesInView;
 
                   return (
                   <button
                     key={service.id}
                     type="button"
-                    onClick={() => setActiveServiceIndex(index)}
+                    onClick={() => selectService(index)}
                     className={`grid w-full grid-cols-[48px_1fr] gap-1 py-8 text-left outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[#2563eb]/30 focus-visible:ring-offset-4 ${
                       index === services.length - 1 ? "" : "border-b border-fog"
                     }`}
@@ -1037,6 +1066,16 @@ export default function Home() {
                         {service.title}
                       </h3>
                       <p className="mt-2 text-sm leading-relaxed text-graphite">{service.description}</p>
+                      <div
+                        key={`${service.id}-${shouldAnimateProgress ? serviceProgressKey : "idle"}`}
+                        className={`service-progress ${
+                          shouldAnimateProgress ? "service-progress--active" : ""
+                        }`}
+                        aria-hidden="true"
+                      >
+                        <span className="service-progress__fill" />
+                        <span className="service-progress__dot" />
+                      </div>
                     </div>
                   </button>
                   );
@@ -1108,7 +1147,9 @@ export default function Home() {
 
             <div className="mt-8 flex flex-col gap-4 border-t border-white pt-6 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-3xl font-bold tracking-[-0.02em] text-ink md:text-4xl">
-                Wesley Farias | Engenheiro de Software
+                <span className="font-bold">Wesley Farias</span>{" "}
+                <span className="font-normal">|</span>{" "}
+                <span className="font-bold">Engenheiro de Software</span>
               </h3>
               <a
                 href="#projetos"
@@ -1183,7 +1224,6 @@ export default function Home() {
                 sizes="90vw"
                 className="max-h-[72vh] w-full object-contain"
                 quality={100}
-                unoptimized
               />
 
               {activeProject.images.length > 1 && (
@@ -1234,7 +1274,6 @@ export default function Home() {
                         sizes="96px"
                         className="object-cover"
                         quality={75}
-                        unoptimized
                       />
                     </button>
                   );
@@ -1251,6 +1290,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <FloatingAssistant />
     </div>
     </>
   );
