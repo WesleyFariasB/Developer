@@ -29,18 +29,27 @@ type GeminiResponseBody = {
   candidates?: unknown;
 };
 
+type GeminiRequestContent = {
+  parts: { text: string }[];
+  role: "model" | "user";
+};
+
 const geminiModel = "gemini-2.5-flash";
 const maxMessageLength = 700;
 const maxHistoryItems = 8;
 const maxHistoryMessageLength = 900;
-const rateLimitMaxRequests = 10;
+const rateLimitMaxRequests = 20;
 const rateLimitWindowMs = 60_000;
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
-const genericErrorReply =
-  "Não consegui responder agora. Para falar diretamente com Wesley, use o WhatsApp: " +
-  whatsappUrl;
+const temporaryErrorReply = "Tive uma instabilidade rápida ao responder. Pode tentar novamente?";
+
+const missingKeyReply =
+  "O assistente de IA não está configurado no momento. Tente novamente mais tarde.";
+
+const rateLimitReply =
+  "Recebi muitas mensagens em pouco tempo. Aguarde alguns instantes e tente novamente.";
 
 const promptInjectionReply =
   "Não posso revelar instruções internas, prompts ou dados sensíveis. Posso ajudar com informações sobre serviços, projetos, stack, orçamento e contato profissional do Wesley.";
@@ -79,13 +88,47 @@ function normalizeMessage(value: string, maxLength: number) {
     .slice(0, maxLength);
 }
 
-function getClientIp(request: Request) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    return forwardedFor.split(",")[0]?.trim() || "unknown";
+function logAssistantEvent(
+  level: "error" | "info" | "warn",
+  event: string,
+  details: Record<string, number | string> = {},
+) {
+  const payload = {
+    event,
+    ...details,
+  };
+
+  if (level === "error") {
+    console.error("[assistant-api]", payload);
+    return;
   }
 
-  return request.headers.get("x-real-ip") || "unknown";
+  if (level === "warn") {
+    console.warn("[assistant-api]", payload);
+    return;
+  }
+
+  console.info("[assistant-api]", payload);
+}
+
+function getClientIp(request: Request) {
+  const headerNames = ["x-forwarded-for", "x-real-ip", "cf-connecting-ip", "x-client-ip"];
+
+  for (const headerName of headerNames) {
+    const value = request.headers.get(headerName);
+    const firstValue = value?.split(",")[0]?.trim();
+
+    if (firstValue) {
+      return firstValue;
+    }
+  }
+
+  return "unknown";
+}
+
+function getRateLimitKey(request: Request) {
+  const userAgent = request.headers.get("user-agent")?.slice(0, 80) || "unknown-agent";
+  return `${getClientIp(request)}:${userAgent}`;
 }
 
 function checkRateLimit(ip: string) {
@@ -141,7 +184,7 @@ function parseHistory(value: unknown): AssistantHistoryMessage[] {
     .slice(-maxHistoryItems);
 }
 
-function createGeminiContent(role: "model" | "user", text: string) {
+function createGeminiContent(role: "model" | "user", text: string): GeminiRequestContent {
   return {
     parts: [{ text }],
     role,
@@ -149,12 +192,30 @@ function createGeminiContent(role: "model" | "user", text: string) {
 }
 
 function createGeminiContents(history: AssistantHistoryMessage[], message: string) {
-  return [
-    ...history.map((item) =>
-      createGeminiContent(item.role === "assistant" ? "model" : "user", item.content),
-    ),
-    createGeminiContent("user", message),
-  ];
+  const contents: GeminiRequestContent[] = [];
+
+  history.forEach((item) => {
+    const role = item.role === "assistant" ? "model" : "user";
+    const content = normalizeMessage(item.content, maxHistoryMessageLength);
+
+    if (!content) return;
+    if (contents.length === 0 && role === "model") return;
+
+    if (contents.at(-1)?.role === role) {
+      contents[contents.length - 1] = createGeminiContent(role, content);
+      return;
+    }
+
+    contents.push(createGeminiContent(role, content));
+  });
+
+  if (contents.at(-1)?.role === "user") {
+    contents.pop();
+  }
+
+  contents.push(createGeminiContent("user", message));
+
+  return contents;
 }
 
 function extractGeminiText(data: GeminiResponseBody) {
@@ -185,6 +246,28 @@ function hasIncompleteGeminiOutput(data: GeminiResponseBody) {
     if (!isRecord(candidate)) return false;
     return (candidate as GeminiCandidate).finishReason === "MAX_TOKENS";
   });
+}
+
+function getErrorName(error: unknown) {
+  return error instanceof Error ? error.name : typeof error;
+}
+
+function getSafeErrorDetails(error: unknown) {
+  const details: Record<string, string> = {
+    errorName: getErrorName(error),
+  };
+
+  if (error instanceof Error && error.message) {
+    details.errorMessage = error.message.slice(0, 120);
+  }
+
+  const cause = error instanceof Error ? error.cause : null;
+
+  if (isRecord(cause) && typeof cause.code === "string") {
+    details.causeCode = cause.code.slice(0, 80);
+  }
+
+  return details;
 }
 
 export async function POST(request: Request) {
@@ -226,15 +309,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const ip = getClientIp(request);
-  const rateLimit = checkRateLimit(ip);
+  const rateLimit = checkRateLimit(getRateLimitKey(request));
 
   if (rateLimit.limited) {
+    logAssistantEvent("warn", "rate_limit", { retryAfter: rateLimit.retryAfter });
+
     return NextResponse.json(
       {
-        reply:
-          "Recebi muitas mensagens em pouco tempo. Tente novamente em instantes ou fale com Wesley pelo WhatsApp: " +
-          whatsappUrl,
+        error: "rate_limit",
+        reply: rateLimitReply,
       },
       {
         headers: { "Retry-After": String(rateLimit.retryAfter) },
@@ -252,51 +335,108 @@ export async function POST(request: Request) {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    return NextResponse.json({ reply: genericErrorReply }, { status: 503 });
+    logAssistantEvent("error", "missing_key");
+
+    return NextResponse.json(
+      { error: "missing_key", reply: missingKeyReply },
+      { status: 503 },
+    );
   }
 
   try {
     const history = parseHistory(body.history);
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`,
-      {
-        body: JSON.stringify({
-          contents: createGeminiContents(history, message),
-          generationConfig: {
-            maxOutputTokens: 900,
-            temperature: 0.25,
-            topP: 0.8,
-          },
-          systemInstruction: {
-            parts: [{ text: assistantInstructions }],
-          },
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        method: "POST",
-      },
-    );
+    const contents = createGeminiContents(history, message);
 
-    if (!geminiResponse.ok) {
-      return NextResponse.json({ reply: genericErrorReply }, { status: 502 });
+    logAssistantEvent("info", "gemini_request", {
+      geminiContents: contents.length,
+      historyItems: history.length,
+      messageLength: message.length,
+    });
+
+    let geminiResponse: Response;
+
+    try {
+      geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`,
+        {
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              maxOutputTokens: 900,
+              temperature: 0.25,
+              topP: 0.8,
+            },
+            systemInstruction: {
+              parts: [{ text: assistantInstructions }],
+            },
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
+          },
+          method: "POST",
+        },
+      );
+    } catch (error) {
+      logAssistantEvent("warn", "gemini_error", getSafeErrorDetails(error));
+
+      return NextResponse.json(
+        { error: "gemini_error", reply: temporaryErrorReply },
+        { status: 502 },
+      );
     }
 
-    const data = (await geminiResponse.json()) as GeminiResponseBody;
+    if (!geminiResponse.ok) {
+      logAssistantEvent("warn", "gemini_error", { status: geminiResponse.status });
+
+      return NextResponse.json(
+        { error: "gemini_error", reply: temporaryErrorReply },
+        { status: 502 },
+      );
+    }
+
+    let data: GeminiResponseBody;
+
+    try {
+      data = (await geminiResponse.json()) as GeminiResponseBody;
+    } catch (error) {
+      logAssistantEvent("warn", "gemini_invalid_json", getSafeErrorDetails(error));
+
+      return NextResponse.json(
+        { error: "gemini_error", reply: temporaryErrorReply },
+        { status: 502 },
+      );
+    }
 
     if (hasIncompleteGeminiOutput(data)) {
-      return NextResponse.json({ reply: incompleteReply }, { status: 502 });
+      logAssistantEvent("warn", "gemini_incomplete");
+
+      return NextResponse.json(
+        { error: "gemini_error", reply: incompleteReply },
+        { status: 502 },
+      );
     }
 
     const reply = extractGeminiText(data);
 
     if (!reply) {
-      return NextResponse.json({ reply: genericErrorReply }, { status: 502 });
+      logAssistantEvent("warn", "empty_response");
+
+      return NextResponse.json(
+        { error: "empty_response", reply: temporaryErrorReply },
+        { status: 502 },
+      );
     }
 
+    logAssistantEvent("info", "gemini_success", { replyLength: reply.length });
+
     return NextResponse.json({ reply });
-  } catch {
-    return NextResponse.json({ reply: genericErrorReply }, { status: 502 });
+  } catch (error) {
+    logAssistantEvent("error", "unexpected_error", getSafeErrorDetails(error));
+
+    return NextResponse.json(
+      { error: "unexpected_error", reply: temporaryErrorReply },
+      { status: 500 },
+    );
   }
 }

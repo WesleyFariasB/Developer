@@ -33,9 +33,7 @@ const quickSuggestions = [
   "Ver projetos",
 ];
 
-const fallbackReply =
-  "Não consegui responder agora. Para falar diretamente com Wesley, use o WhatsApp: " +
-  whatsappUrl;
+const fallbackReply = "Tive uma instabilidade rápida ao responder. Pode tentar novamente?";
 
 function createMessageId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -52,6 +50,16 @@ function getReplyFromResponse(value: unknown) {
   }
 
   return null;
+}
+
+function createRequestHistory(messages: ChatMessage[]) {
+  return messages
+    .filter((message) => message.id !== "assistant-welcome" && message.content.trim())
+    .map(({ content, role }) => ({
+      content: content.trim(),
+      role,
+    }))
+    .slice(-8);
 }
 
 function parseMarkdown(content: string): MarkdownBlock[] {
@@ -171,6 +179,7 @@ export default function FloatingAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const hasConversationStarted = messages.some((message) => message.role === "user");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -202,9 +211,7 @@ export default function FloatingAssistant() {
       id: createMessageId(),
       role: "user",
     };
-    const history = messages
-      .map(({ content: messageContent, role }) => ({ content: messageContent, role }))
-      .slice(-8);
+    const history = createRequestHistory(messages);
 
     setMessages((currentMessages) => [...currentMessages, userMessage]);
     setInput("");
@@ -326,7 +333,12 @@ export default function FloatingAssistant() {
           </div>
 
           <div className="assistant-composer">
-            <div className="assistant-suggestions" aria-label="Perguntas rápidas">
+            <div
+              className={`assistant-suggestions ${
+                hasConversationStarted ? "assistant-suggestions--compact" : ""
+              }`}
+              aria-label="Perguntas rápidas"
+            >
               {quickSuggestions.map((suggestion) => (
                 <button
                   key={suggestion}
