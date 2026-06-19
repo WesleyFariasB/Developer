@@ -453,16 +453,31 @@ h6 {
   font-weight: 800;
   gap: 0.55rem;
   justify-content: center;
+  line-height: 1.2;
   outline: none;
   padding: 0.86rem 1rem;
+  text-decoration: none;
   transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.assistant-markdown .assistant-whatsapp {
+  color: #ffffff;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .assistant-whatsapp:hover,
 .assistant-whatsapp:focus-visible {
   background: #2563eb;
   box-shadow: 0 16px 32px rgb(37 99 235 / 18%);
+  text-decoration: none;
   transform: translateY(-1px);
+}
+
+.assistant-markdown .assistant-whatsapp:hover,
+.assistant-markdown .assistant-whatsapp:focus-visible {
+  color: #ffffff;
+  text-decoration: none;
 }
 
 .assistant-form {
@@ -1134,10 +1149,20 @@ h6 {
     padding: 0.45rem 0.72rem;
   }
 
+  .assistant-markdown .assistant-whatsapp {
+    color: #334155;
+    font-weight: 750;
+  }
+
   .assistant-whatsapp:hover,
   .assistant-whatsapp:focus-visible {
     background: #eff6ff;
     box-shadow: none;
+    color: #1d4ed8;
+  }
+
+  .assistant-markdown .assistant-whatsapp:hover,
+  .assistant-markdown .assistant-whatsapp:focus-visible {
     color: #1d4ed8;
   }
 

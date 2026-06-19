@@ -101,6 +101,15 @@ function WhatsAppIcon() {
   );
 }
 
+function WhatsAppButtonLink({ children }: { children: ReactNode }) {
+  return (
+    <a href={whatsappUrl} target="_blank" rel="noreferrer" className="assistant-whatsapp">
+      <WhatsAppIcon />
+      {children}
+    </a>
+  );
+}
+
 function parseMarkdown(content: string): MarkdownBlock[] {
   const lines = content.replace(/\r\n/g, "\n").split("\n");
   const blocks: MarkdownBlock[] = [];
@@ -211,17 +220,18 @@ function renderActionLink(
 
   const isWhatsApp = isWhatsAppHref(cleanUrl);
 
+  if (isWhatsApp) {
+    return <WhatsAppButtonLink key={key}>{linkLabel}</WhatsAppButtonLink>;
+  }
+
   return (
     <a
       key={key}
-      href={isWhatsApp ? whatsappUrl : cleanUrl}
+      href={cleanUrl}
       target="_blank"
       rel="noreferrer"
-      className={`assistant-action-link ${
-        isWhatsApp ? "assistant-action-link--whatsapp" : "assistant-action-link--default"
-      }`}
+      className="assistant-action-link assistant-action-link--default"
     >
-      {isWhatsApp && <WhatsAppIcon />}
       {linkLabel}
     </a>
   );
@@ -559,15 +569,7 @@ export default function FloatingAssistant() {
               ))}
             </div>
 
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="assistant-whatsapp"
-            >
-              <WhatsAppIcon />
-              Falar no WhatsApp
-            </a>
+            <WhatsAppButtonLink>Falar no WhatsApp</WhatsAppButtonLink>
 
             <form onSubmit={handleSubmit} className="assistant-form">
               <label htmlFor="assistant-message" className="sr-only">
