@@ -1,7 +1,5 @@
 import { siteKnowledge, whatsappUrl } from "@/lib/siteKnowledge";
 
-const budgetWhatsAppUrl = `${whatsappUrl}&text=Ol%C3%A1%2C%20quero%20solicitar%20um%20or%C3%A7amento`;
-
 function normalizeQuestion(value: string) {
   return value
     .normalize("NFD")
@@ -40,7 +38,7 @@ const budgetReply = [
   "- prazo desejado;",
   "- referências ou funcionalidades importantes.",
   "",
-  `WhatsApp: ${budgetWhatsAppUrl}`,
+  `[Solicitar orçamento no WhatsApp](${whatsappUrl})`,
 ].join("\n");
 
 const profileReply = [
@@ -54,19 +52,17 @@ const profileReply = [
 ].join("\n");
 
 const projectsReply = [
-  "Você pode ver os projetos na seção **Projetos** do site.",
+  "Vou te levar para a seção **Projetos** do site.",
   "",
   siteKnowledge.projects
     .map((project) => `- **${project.title}** (${project.tag}): ${project.description}`)
     .join("\n"),
-  "",
-  "Link: #projetos",
 ].join("\n");
 
 const outOfScopeReply = [
   "Eu sou o assistente do site do Wesley Farias e só posso ajudar com informações sobre serviços, projetos, stack, experiência e contato profissional.",
   "",
-  `Para falar diretamente com Wesley: ${whatsappUrl}`,
+  `[Falar com Wesley no WhatsApp](${whatsappUrl})`,
 ].join("\n");
 
 const localReplies = new Map([

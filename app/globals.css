@@ -282,6 +282,56 @@ h6 {
   text-underline-offset: 0.18em;
 }
 
+.assistant-action-link {
+  align-items: center;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.8rem;
+  font-weight: 800;
+  gap: 0.45rem;
+  justify-content: center;
+  line-height: 1.2;
+  max-width: 100%;
+  min-height: 2.3rem;
+  outline: none;
+  padding: 0.58rem 0.82rem;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.assistant-action-link svg {
+  flex: 0 0 auto;
+  height: 1rem;
+  width: 1rem;
+}
+
+.assistant-action-link--whatsapp {
+  background: #111111;
+  color: #ffffff;
+}
+
+.assistant-action-link--default,
+.assistant-action-link--project {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.assistant-action-link--project {
+  cursor: pointer;
+}
+
+.assistant-action-link:hover,
+.assistant-action-link:focus-visible {
+  background: #1d4ed8;
+  box-shadow: 0 12px 24px rgb(37 99 235 / 18%);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 .assistant-markdown ul {
   display: grid;
   gap: 0.5rem;

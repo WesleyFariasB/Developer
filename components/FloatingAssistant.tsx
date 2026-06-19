@@ -18,6 +18,12 @@ type MarkdownBlock =
   | { items: string[]; type: "list" }
   | { text: string; type: "paragraph" };
 
+type MessageContentProps = {
+  content: string;
+  isUser: boolean;
+  onProjectLinkClick: () => void;
+};
+
 const initialMessages: ChatMessage[] = [
   {
     content:
@@ -80,6 +86,21 @@ function createRequestHistory(messages: ChatMessage[]) {
     .slice(-6);
 }
 
+function WhatsAppIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M17.5 14.4c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.1 8.1 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.7l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3c.2.3 2 3.2 4.9 4.4 2.9 1.1 2.9.7 3.4.7s1.8-.7 2-1.4c.3-.7.3-1.3.2-1.4Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12 2.5a9.4 9.4 0 0 0-8.1 14.1l-1 3.7 3.8-1A9.4 9.4 0 1 0 12 2.5Zm0 17.1a7.8 7.8 0 0 1-4-1.1l-.3-.2-2.2.6.6-2.1-.2-.3a7.7 7.7 0 1 1 6.1 3.1Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 function parseMarkdown(content: string): MarkdownBlock[] {
   const lines = content.replace(/\r\n/g, "\n").split("\n");
   const blocks: MarkdownBlock[] = [];
@@ -137,22 +158,103 @@ function parseMarkdown(content: string): MarkdownBlock[] {
   return blocks.length > 0 ? blocks : [{ text: content, type: "paragraph" }];
 }
 
-function renderInlineMarkdown(text: string): ReactNode[] {
+function cleanHref(value: string) {
+  return value.trim().replace(/[.,;]+$/g, "");
+}
+
+function isWhatsAppHref(href: string) {
+  return /(?:api\.whatsapp\.com\/send|wa\.me)/i.test(href);
+}
+
+function isProjectHref(href: string) {
+  return href.trim().toLowerCase() === "#projetos";
+}
+
+function isUrlText(value: string) {
+  return /^https?:\/\//i.test(value) || isProjectHref(value);
+}
+
+function getFriendlyLinkLabel(href: string, label?: string) {
+  if (isProjectHref(href)) return "Ver projetos";
+  if (isWhatsAppHref(href)) {
+    return label?.toLowerCase().includes("orçamento")
+      ? "Solicitar orçamento no WhatsApp"
+      : "Falar com Wesley no WhatsApp";
+  }
+
+  if (label && !isUrlText(label)) return label;
+
+  return "Abrir link";
+}
+
+function renderActionLink(
+  href: string,
+  label: string | undefined,
+  key: string,
+  onProjectLinkClick: () => void,
+) {
+  const cleanUrl = cleanHref(href);
+  const linkLabel = getFriendlyLinkLabel(cleanUrl, label);
+
+  if (isProjectHref(cleanUrl)) {
+    return (
+      <button
+        key={key}
+        type="button"
+        className="assistant-action-link assistant-action-link--project"
+        onClick={onProjectLinkClick}
+      >
+        {linkLabel}
+      </button>
+    );
+  }
+
+  const isWhatsApp = isWhatsAppHref(cleanUrl);
+
+  return (
+    <a
+      key={key}
+      href={isWhatsApp ? whatsappUrl : cleanUrl}
+      target="_blank"
+      rel="noreferrer"
+      className={`assistant-action-link ${
+        isWhatsApp ? "assistant-action-link--whatsapp" : "assistant-action-link--default"
+      }`}
+    >
+      {isWhatsApp && <WhatsAppIcon />}
+      {linkLabel}
+    </a>
+  );
+}
+
+function renderInlineMarkdown(text: string, onProjectLinkClick: () => void): ReactNode[] {
   const nodes: ReactNode[] = [];
-  const parts = text.split(/(\*\*[^*]+\*\*|https?:\/\/[^\s)]+)/g).filter(Boolean);
+  const parts = text
+    .split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|https?:\/\/[^\s)]+|#projetos)/gi)
+    .filter(Boolean);
 
   parts.forEach((part, index) => {
+    const markdownLinkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+
+    if (markdownLinkMatch) {
+      nodes.push(
+        renderActionLink(
+          markdownLinkMatch[2],
+          markdownLinkMatch[1],
+          `${part}-${index}`,
+          onProjectLinkClick,
+        ),
+      );
+      return;
+    }
+
     if (part.startsWith("**") && part.endsWith("**")) {
       nodes.push(<strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>);
       return;
     }
 
-    if (/^https?:\/\//.test(part)) {
-      nodes.push(
-        <a key={`${part}-${index}`} href={part} target="_blank" rel="noreferrer">
-          {part}
-        </a>,
-      );
+    if (/^https?:\/\//i.test(part) || isProjectHref(part)) {
+      nodes.push(renderActionLink(part, undefined, `${part}-${index}`, onProjectLinkClick));
       return;
     }
 
@@ -162,7 +264,7 @@ function renderInlineMarkdown(text: string): ReactNode[] {
   return nodes;
 }
 
-function MessageContent({ content, isUser }: { content: string; isUser: boolean }) {
+function MessageContent({ content, isUser, onProjectLinkClick }: MessageContentProps) {
   if (isUser) {
     return <p>{content}</p>;
   }
@@ -171,20 +273,30 @@ function MessageContent({ content, isUser }: { content: string; isUser: boolean 
     <div className="assistant-markdown">
       {parseMarkdown(content).map((block, index) => {
         if (block.type === "heading") {
-          return <h4 key={`${block.text}-${index}`}>{renderInlineMarkdown(block.text)}</h4>;
+          return (
+            <h4 key={`${block.text}-${index}`}>
+              {renderInlineMarkdown(block.text, onProjectLinkClick)}
+            </h4>
+          );
         }
 
         if (block.type === "list") {
           return (
             <ul key={`list-${index}`}>
               {block.items.map((item, itemIndex) => (
-                <li key={`${item}-${itemIndex}`}>{renderInlineMarkdown(item)}</li>
+                <li key={`${item}-${itemIndex}`}>
+                  {renderInlineMarkdown(item, onProjectLinkClick)}
+                </li>
               ))}
             </ul>
           );
         }
 
-        return <p key={`${block.text}-${index}`}>{renderInlineMarkdown(block.text)}</p>;
+        return (
+          <p key={`${block.text}-${index}`}>
+            {renderInlineMarkdown(block.text, onProjectLinkClick)}
+          </p>
+        );
       })}
     </div>
   );
@@ -245,6 +357,14 @@ export default function FloatingAssistant() {
     }, requestCooldownMs);
   };
 
+  const scrollToProjects = () => {
+    document.getElementById("projetos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      setIsOpen(false);
+    }
+  };
+
   const sendMessage = async (content: string) => {
     const nextContent = content.replace(/\s+/g, " ").trim();
     if (!nextContent || sendLockRef.current || isBusy) return;
@@ -264,6 +384,13 @@ export default function FloatingAssistant() {
     setIsCoolingDown(true);
     lastSubmissionRef.current = { at: now, content: normalizedContent };
 
+    if (normalizedContent === "ver projetos") {
+      scrollToProjects();
+      setInput("");
+      releaseSendLock();
+      return;
+    }
+
     const userMessage: ChatMessage = {
       content: nextContent,
       id: createMessageId(),
@@ -271,10 +398,6 @@ export default function FloatingAssistant() {
     };
     const history = createRequestHistory(messages);
     const localReply = getLocalAssistantReply(nextContent);
-
-    if (nextContent.toLocaleLowerCase("pt-BR") === "ver projetos") {
-      document.getElementById("projetos")?.scrollIntoView({ behavior: "smooth" });
-    }
 
     if (localReply) {
       setMessages((currentMessages) => [
@@ -388,7 +511,11 @@ export default function FloatingAssistant() {
                         isUser ? "assistant-message--user" : "assistant-message--assistant"
                       }`}
                     >
-                      <MessageContent content={message.content} isUser={isUser} />
+                      <MessageContent
+                        content={message.content}
+                        isUser={isUser}
+                        onProjectLinkClick={scrollToProjects}
+                      />
                     </div>
                   </div>
                 );
@@ -438,16 +565,7 @@ export default function FloatingAssistant() {
               rel="noreferrer"
               className="assistant-whatsapp"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M17.5 14.4c-.3-.2-1.8-.9-2.1-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7.1a8.1 8.1 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.7l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5s-.7-1.7-1-2.3c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.2 3c.2.3 2 3.2 4.9 4.4 2.9 1.1 2.9.7 3.4.7s1.8-.7 2-1.4c.3-.7.3-1.3.2-1.4Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M12 2.5a9.4 9.4 0 0 0-8.1 14.1l-1 3.7 3.8-1A9.4 9.4 0 1 0 12 2.5Zm0 17.1a7.8 7.8 0 0 1-4-1.1l-.3-.2-2.2.6.6-2.1-.2-.3a7.7 7.7 0 1 1 6.1 3.1Z"
-                  fill="currentColor"
-                />
-              </svg>
+              <WhatsAppIcon />
               Falar no WhatsApp
             </a>
 
