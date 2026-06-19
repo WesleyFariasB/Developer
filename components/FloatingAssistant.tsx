@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
+import { getLocalAssistantReply } from "@/lib/assistantLocalReplies";
 import { whatsappUrl } from "@/lib/siteKnowledge";
 
 type ChatRole = "assistant" | "user";
@@ -33,7 +34,10 @@ const quickSuggestions = [
   "Ver projetos",
 ];
 
-const fallbackReply = "Tive uma instabilidade rápida ao responder. Pode tentar novamente?";
+const requestCooldownMs = 1000;
+const fallbackReply = "Tive uma instabilidade rápida. Aguarde alguns segundos e tente novamente.";
+const rateLimitReply =
+  "Recebi muitas solicitações em sequência. Aguarde alguns segundos e tente novamente.";
 
 function createMessageId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -52,14 +56,28 @@ function getReplyFromResponse(value: unknown) {
   return null;
 }
 
+function getErrorFromResponse(value: unknown) {
+  if (typeof value === "object" && value !== null && "error" in value) {
+    const error = (value as { error?: unknown }).error;
+    return typeof error === "string" ? error : null;
+  }
+
+  return null;
+}
+
 function createRequestHistory(messages: ChatMessage[]) {
   return messages
-    .filter((message) => message.id !== "assistant-welcome" && message.content.trim())
+    .filter(
+      (message) =>
+        message.id !== "assistant-welcome" &&
+        (message.role === "assistant" || message.role === "user") &&
+        message.content.trim(),
+    )
     .map(({ content, role }) => ({
       content: content.trim(),
       role,
     }))
-    .slice(-8);
+    .slice(-6);
 }
 
 function parseMarkdown(content: string): MarkdownBlock[] {
@@ -177,9 +195,14 @@ export default function FloatingAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCoolingDown, setIsCoolingDown] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const sendLockRef = useRef(false);
+  const cooldownTimeoutRef = useRef<number | null>(null);
+  const lastSubmissionRef = useRef<{ content: string; at: number } | null>(null);
   const hasConversationStarted = messages.some((message) => message.role === "user");
+  const isBusy = isLoading || isCoolingDown;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -202,9 +225,44 @@ export default function FloatingAssistant() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
+  useEffect(() => {
+    return () => {
+      if (cooldownTimeoutRef.current !== null) {
+        window.clearTimeout(cooldownTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const releaseSendLock = () => {
+    if (cooldownTimeoutRef.current !== null) {
+      window.clearTimeout(cooldownTimeoutRef.current);
+    }
+
+    cooldownTimeoutRef.current = window.setTimeout(() => {
+      sendLockRef.current = false;
+      setIsCoolingDown(false);
+      cooldownTimeoutRef.current = null;
+    }, requestCooldownMs);
+  };
+
   const sendMessage = async (content: string) => {
-    const nextContent = content.trim();
-    if (!nextContent || isLoading) return;
+    const nextContent = content.replace(/\s+/g, " ").trim();
+    if (!nextContent || sendLockRef.current || isBusy) return;
+
+    const normalizedContent = nextContent.toLocaleLowerCase("pt-BR");
+    const now = Date.now();
+    const lastSubmission = lastSubmissionRef.current;
+
+    if (
+      lastSubmission?.content === normalizedContent &&
+      now - lastSubmission.at < requestCooldownMs
+    ) {
+      return;
+    }
+
+    sendLockRef.current = true;
+    setIsCoolingDown(true);
+    lastSubmissionRef.current = { at: now, content: normalizedContent };
 
     const userMessage: ChatMessage = {
       content: nextContent,
@@ -212,9 +270,26 @@ export default function FloatingAssistant() {
       role: "user",
     };
     const history = createRequestHistory(messages);
+    const localReply = getLocalAssistantReply(nextContent);
+
+    if (nextContent.toLocaleLowerCase("pt-BR") === "ver projetos") {
+      document.getElementById("projetos")?.scrollIntoView({ behavior: "smooth" });
+    }
+
+    if (localReply) {
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        userMessage,
+        { content: localReply, id: createMessageId(), role: "assistant" },
+      ]);
+      setInput("");
+      releaseSendLock();
+      return;
+    }
 
     setMessages((currentMessages) => [...currentMessages, userMessage]);
     setInput("");
+    setIsCoolingDown(false);
     setIsLoading(true);
 
     try {
@@ -224,7 +299,9 @@ export default function FloatingAssistant() {
         method: "POST",
       });
       const data = await response.json().catch(() => null);
-      const reply = getReplyFromResponse(data) ?? fallbackReply;
+      const responseError = getErrorFromResponse(data);
+      const reply =
+        getReplyFromResponse(data) ?? (responseError === "rate_limit" ? rateLimitReply : fallbackReply);
 
       setMessages((currentMessages) => [
         ...currentMessages,
@@ -237,6 +314,8 @@ export default function FloatingAssistant() {
       ]);
     } finally {
       setIsLoading(false);
+      setIsCoolingDown(true);
+      releaseSendLock();
     }
   };
 
@@ -246,10 +325,6 @@ export default function FloatingAssistant() {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
-    if (suggestion === "Ver projetos") {
-      document.getElementById("projetos")?.scrollIntoView({ behavior: "smooth" });
-    }
-
     void sendMessage(suggestion);
   };
 
@@ -291,7 +366,12 @@ export default function FloatingAssistant() {
             </button>
           </div>
 
-          <div className="assistant-messages" aria-live="polite" aria-relevant="additions">
+          <div
+            className="assistant-messages"
+            aria-busy={isLoading}
+            aria-live="polite"
+            aria-relevant="additions"
+          >
             <div className="assistant-messages__inner">
               {messages.map((message) => {
                 const isUser = message.role === "user";
@@ -344,7 +424,7 @@ export default function FloatingAssistant() {
                   key={suggestion}
                   type="button"
                   onClick={() => handleSuggestionClick(suggestion)}
-                  disabled={isLoading}
+                  disabled={isBusy}
                   className="assistant-suggestion"
                 >
                   {suggestion}
@@ -386,7 +466,7 @@ export default function FloatingAssistant() {
               />
               <button
                 type="submit"
-                disabled={isLoading || !input.trim()}
+                disabled={isBusy || !input.trim()}
                 aria-label="Enviar mensagem"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
