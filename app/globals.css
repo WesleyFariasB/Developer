@@ -845,6 +845,7 @@ h6 {
 
 .project-marquee {
   cursor: grab;
+  overscroll-behavior-x: contain;
   overflow: hidden;
   padding-block: 0.15rem;
   touch-action: pan-y;

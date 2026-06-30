@@ -173,6 +173,7 @@ const projectShowcase: Project[] = [
 
 const projectLoopCopies = 3;
 const projectDragThreshold = 8;
+const projectMobileMediaQuery = "(max-width: 767px)";
 const serviceAutoAdvanceDuration = 5200;
 
 const projectMarqueeRows = [
@@ -304,17 +305,23 @@ export default function Home() {
   const projectOffsetsRef = useRef<number[]>([0, 0]);
   const projectDirectionRef = useRef(1);
   const projectHoveringRef = useRef(false);
+  const projectMobileInViewRef = useRef(false);
   const projectPausedRef = useRef(false);
   const projectResumeTimeoutRef = useRef<number | null>(null);
   const projectPointerRef = useRef<{
+    captured: boolean;
+    isDragging: boolean;
     lastX: number;
     moved: boolean;
     pointerId: number;
+    pointerType: string;
     projectIndex: number | null;
     rowIndex: number;
     startX: number;
+    startY: number;
   } | null>(null);
   const projectDragMovedRef = useRef(false);
+  const projectsSectionRef = useRef<HTMLElement | null>(null);
   const servicesSectionRef = useRef<HTMLElement | null>(null);
   const aboutSectionRef = useRef<HTMLElement | null>(null);
   const metricsStartedRef = useRef(false);
@@ -379,7 +386,11 @@ export default function Home() {
 
     if (resumeDelay > 0) {
       projectResumeTimeoutRef.current = window.setTimeout(() => {
-        if (!projectHoveringRef.current && !projectPointerRef.current) {
+        if (
+          !projectHoveringRef.current &&
+          !projectPointerRef.current &&
+          !projectMobileInViewRef.current
+        ) {
           projectPausedRef.current = false;
         }
         projectResumeTimeoutRef.current = null;
@@ -388,7 +399,7 @@ export default function Home() {
   }, []);
 
   const resumeProjectMotion = useCallback(() => {
-    if (projectPointerRef.current) return;
+    if (projectPointerRef.current || projectMobileInViewRef.current) return;
 
     if (projectResumeTimeoutRef.current) {
       window.clearTimeout(projectResumeTimeoutRef.current);
@@ -432,15 +443,24 @@ export default function Home() {
 
       pauseProjectMotion();
       projectDragMovedRef.current = false;
+      const capturePointer = event.pointerType === "mouse";
+
+      if (capturePointer) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
+
       projectPointerRef.current = {
+        captured: capturePointer,
+        isDragging: false,
         lastX: event.clientX,
         moved: false,
         pointerId: event.pointerId,
+        pointerType: event.pointerType,
         projectIndex: Number.isInteger(nextProjectIndex) ? nextProjectIndex : null,
         rowIndex,
         startX: event.clientX,
+        startY: event.clientY,
       };
-      event.currentTarget.setPointerCapture(event.pointerId);
     },
     [pauseProjectMotion],
   );
@@ -452,11 +472,40 @@ export default function Home() {
 
       const deltaX = event.clientX - pointer.lastX;
       const totalX = event.clientX - pointer.startX;
-      if (Math.abs(totalX) > projectDragThreshold) {
+      const totalY = event.clientY - pointer.startY;
+      const absX = Math.abs(totalX);
+      const absY = Math.abs(totalY);
+      const needsHorizontalIntent = pointer.pointerType !== "mouse";
+
+      if (!pointer.isDragging) {
+        if (needsHorizontalIntent && absY > projectDragThreshold && absY > absX) {
+          if (pointer.captured && event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }
+
+          projectPointerRef.current = null;
+          projectDragMovedRef.current = true;
+          pauseProjectMotion(900);
+          window.setTimeout(() => {
+            projectDragMovedRef.current = false;
+          }, 120);
+          return;
+        }
+
+        if (absX <= projectDragThreshold || (needsHorizontalIntent && absX <= absY)) {
+          return;
+        }
+
+        pointer.isDragging = true;
         pointer.moved = true;
         projectDragMovedRef.current = true;
-        event.preventDefault();
+        if (!pointer.captured) {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          pointer.captured = true;
+        }
       }
+
+      event.preventDefault();
 
       if (deltaX !== 0) {
         const dragDirection = pointer.rowIndex === 0 ? -1 : 1;
@@ -465,7 +514,7 @@ export default function Home() {
         renderProjectTracks();
       }
     },
-    [renderProjectTracks],
+    [pauseProjectMotion, renderProjectTracks],
   );
 
   const finishProjectPointer = useCallback(
@@ -473,7 +522,7 @@ export default function Home() {
       const pointer = projectPointerRef.current;
       if (!pointer || pointer.pointerId !== event.pointerId) return;
 
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      if (pointer.captured && event.currentTarget.hasPointerCapture(event.pointerId)) {
         event.currentTarget.releasePointerCapture(event.pointerId);
       }
 
@@ -540,7 +589,7 @@ export default function Home() {
       const deltaTime = Math.min(time - lastTime, 48);
       lastTime = time;
 
-      if (!projectPausedRef.current) {
+      if (!projectPausedRef.current && !projectMobileInViewRef.current) {
         const autoDistance = deltaTime * 0.05 * projectDirectionRef.current;
         projectOffsetsRef.current = projectOffsetsRef.current.map(
           (offset) => offset + autoDistance,
@@ -557,6 +606,12 @@ export default function Home() {
       scrollFrame = window.requestAnimationFrame(() => {
         scrollFrame = 0;
         const currentScrollY = window.scrollY;
+
+        if (projectMobileInViewRef.current) {
+          lastScrollY = currentScrollY;
+          return;
+        }
+
         const deltaY = currentScrollY - lastScrollY;
 
         if (deltaY !== 0) {
@@ -596,6 +651,58 @@ export default function Home() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [renderProjectTracks]);
+
+  useEffect(() => {
+    const section = projectsSectionRef.current;
+    if (!section) return undefined;
+
+    const mobileQuery = window.matchMedia(projectMobileMediaQuery);
+    let isSectionVisible = false;
+
+    const syncProjectMotionLock = () => {
+      projectMobileInViewRef.current = mobileQuery.matches && isSectionVisible;
+
+      if (projectMobileInViewRef.current) {
+        pauseProjectMotion();
+        return;
+      }
+
+      resumeProjectMotion();
+    };
+
+    const sectionRect = section.getBoundingClientRect();
+    isSectionVisible = sectionRect.top < window.innerHeight && sectionRect.bottom > 0;
+    syncProjectMotionLock();
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isSectionVisible = entry.isIntersecting;
+        syncProjectMotionLock();
+      },
+      { threshold: 0 },
+    );
+
+    observer.observe(section);
+
+    if (mobileQuery.addEventListener) {
+      mobileQuery.addEventListener("change", syncProjectMotionLock);
+    } else {
+      mobileQuery.addListener(syncProjectMotionLock);
+    }
+
+    return () => {
+      observer.disconnect();
+
+      if (mobileQuery.removeEventListener) {
+        mobileQuery.removeEventListener("change", syncProjectMotionLock);
+      } else {
+        mobileQuery.removeListener(syncProjectMotionLock);
+      }
+
+      projectMobileInViewRef.current = false;
+      resumeProjectMotion();
+    };
+  }, [pauseProjectMotion, resumeProjectMotion]);
 
   useEffect(() => {
     const section = servicesSectionRef.current;
@@ -762,6 +869,7 @@ export default function Home() {
       <main id="conteudo">
         <section
           id="projetos"
+          ref={projectsSectionRef}
           className="page-shell relative isolate pb-20 pt-24 md:pt-32"
           data-aos="fade-in"
         >
