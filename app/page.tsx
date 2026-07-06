@@ -961,7 +961,7 @@ export default function Home() {
         <a
           href="https://api.whatsapp.com/send?phone=5583986036971&text=Ol%C3%A1%2C%20quero%20falar%20sobre%20um%20projeto%20web"
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           className="rounded-md text-sm font-semibold underline underline-offset-8 outline-none transition-opacity duration-200 hover:opacity-75 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4"
         >
           Fale comigo
@@ -1038,7 +1038,7 @@ export default function Home() {
                   <a
                     href="https://api.whatsapp.com/send?phone=5583986036971&text=Ol%C3%A1%2C%20tenho%20interesse%20em%20desenvolver%20um%20projeto"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="rounded-full bg-ink px-6 py-2 text-sm font-semibold text-white outline-none transition-all duration-200 hover:-translate-y-[1px] hover:opacity-90 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4 active:translate-y-0"
                   >
                     Solicitar orçamento
@@ -1048,7 +1048,7 @@ export default function Home() {
                     <a
                       href="https://www.linkedin.com/in/wesleyfariasbe/"
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       aria-label="Abrir LinkedIn de Wesley Farias"
                       className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/20 outline-none transition-all duration-200 hover:-translate-y-[1px] hover:border-ink/30 hover:bg-ink/5 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4 active:translate-y-0"
                     >
@@ -1060,7 +1060,7 @@ export default function Home() {
                     <a
                       href="https://www.instagram.com/visualswf/"
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       aria-label="Abrir Instagram de Wesley Farias"
                       className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/20 outline-none transition-all duration-200 hover:-translate-y-[1px] hover:border-ink/30 hover:bg-ink/5 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4 active:translate-y-0"
                     >
@@ -1073,7 +1073,7 @@ export default function Home() {
                     <a
                       href="https://github.com/WesleyFariasB"
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                       aria-label="Abrir GitHub de Wesley Farias"
                       className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/20 outline-none transition-all duration-200 hover:-translate-y-[1px] hover:border-ink/30 hover:bg-ink/5 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4 active:translate-y-0"
                     >

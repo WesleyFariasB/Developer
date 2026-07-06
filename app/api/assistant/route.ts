@@ -40,6 +40,7 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || DEFAULT_GEMINI_MODEL;
 const MAX_MESSAGE_LENGTH = 700;
 const MAX_HISTORY_ITEMS = 6;
 const MAX_HISTORY_MESSAGE_LENGTH = 900;
+const MAX_REQUEST_BODY_BYTES = 10_000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
@@ -58,6 +59,18 @@ const promptInjectionReply =
 
 const incompleteReply =
   "A resposta ficou longa demais para concluir com qualidade. Envie uma pergunta mais objetiva sobre serviços, projetos, stack, orçamento ou contato profissional do Wesley.";
+
+type AssistantErrorCode =
+  | "empty_message"
+  | "gemini_error"
+  | "invalid_content_type"
+  | "invalid_json"
+  | "invalid_payload"
+  | "message_too_long"
+  | "missing_key"
+  | "rate_limit"
+  | "request_too_large"
+  | "unexpected_error";
 
 const assistantInstructions = `Você é o assistente oficial do site de Wesley Farias, desenvolvedor Full Stack especializado em produtos web e mobile. Responda apenas sobre Wesley Farias, seus serviços, projetos, stack, experiência, orçamento e assuntos presentes no site. Seja direto, profissional e consultivo. Quando o usuário quiser orçamento, contratação, reunião ou falar diretamente com Wesley, direcione para o WhatsApp: ${whatsappUrl}. Se a pergunta não tiver relação com o site ou com Wesley como profissional, diga que só pode ajudar com informações sobre os serviços, projetos e contato profissional e inclua o WhatsApp: ${whatsappUrl}.
 
@@ -80,6 +93,43 @@ ${formatSiteKnowledgeForPrompt()}`;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function createAssistantErrorResponse(
+  error: AssistantErrorCode,
+  reply: string,
+  status: number,
+  headers?: HeadersInit,
+) {
+  return NextResponse.json(
+    {
+      error,
+      reply,
+    },
+    {
+      headers,
+      status,
+    },
+  );
+}
+
+function isJsonRequest(request: Request) {
+  return request.headers.get("content-type")?.toLowerCase().includes("application/json") ?? false;
+}
+
+function getRequestBodySize(request: Request) {
+  const contentLength = request.headers.get("content-length");
+  const parsedLength = contentLength ? Number(contentLength) : 0;
+
+  return Number.isFinite(parsedLength) && parsedLength > 0 ? parsedLength : 0;
+}
+
+function isBodyTooLarge(value: unknown) {
+  try {
+    return JSON.stringify(value).length > MAX_REQUEST_BODY_BYTES;
+  } catch {
+    return true;
+  }
 }
 
 function normalizeMessage(value: string, maxLength: number) {
@@ -156,10 +206,13 @@ function checkRateLimit(ip: string) {
 function hasPromptInjectionIntent(message: string) {
   const patterns = [
     /ignore\b.*\b(instru|regras|prompt|sistema)/i,
+    /ignore\b.*\b(previous|all|system|developer)\b.*\b(instructions|messages|prompt)/i,
     /desconsidere\b.*\b(instru|regras|prompt|sistema)/i,
+    /esque(ça|ca)\b.*\b(instru|regras|prompt|sistema)/i,
     /reve(le|lar|la)\b.*\b(prompt|instru|sistema|chave|api)/i,
     /\b(system prompt|developer message|mensagem do sistema)\b/i,
     /\b(gemini_api_key|api key|chave da api)\b/i,
+    /\b(prompt injection|jailbreak|modo dan)\b/i,
     /\bmude\b.*\b(comportamento|regra|instru)/i,
   ];
 
@@ -286,19 +339,41 @@ async function getGeminiErrorSummary(response: Response) {
 export async function POST(request: Request) {
   let body: unknown;
 
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { reply: "Envie uma pergunta válida para o assistente." },
-      { status: 400 },
+  if (!isJsonRequest(request)) {
+    return createAssistantErrorResponse(
+      "invalid_content_type",
+      "Envie a pergunta em formato JSON.",
+      415,
     );
   }
 
-  if (!isRecord(body)) {
-    return NextResponse.json(
-      { reply: "Envie uma pergunta válida para o assistente." },
-      { status: 400 },
+  if (getRequestBodySize(request) > MAX_REQUEST_BODY_BYTES) {
+    return createAssistantErrorResponse(
+      "request_too_large",
+      "Sua mensagem ficou um pouco longa. Envie uma pergunta mais objetiva sobre serviços, projetos, stack, orçamento ou contato.",
+      413,
+    );
+  }
+
+  try {
+    body = await request.json();
+  } catch {
+    return createAssistantErrorResponse(
+      "invalid_json",
+      "Envie uma pergunta válida para o assistente.",
+      400,
+    );
+  }
+
+  const bodyTooLarge = isBodyTooLarge(body);
+
+  if (!isRecord(body) || bodyTooLarge) {
+    return createAssistantErrorResponse(
+      bodyTooLarge ? "request_too_large" : "invalid_payload",
+      bodyTooLarge
+        ? "Sua mensagem ficou um pouco longa. Envie uma pergunta mais objetiva sobre serviços, projetos, stack, orçamento ou contato."
+        : "Envie uma pergunta válida para o assistente.",
+      bodyTooLarge ? 413 : 400,
     );
   }
 
@@ -306,19 +381,18 @@ export async function POST(request: Request) {
   const trimmedMessage = rawMessage.trim();
 
   if (!trimmedMessage) {
-    return NextResponse.json(
-      { reply: "Digite uma pergunta para que eu possa ajudar." },
-      { status: 400 },
+    return createAssistantErrorResponse(
+      "empty_message",
+      "Digite uma pergunta para que eu possa ajudar.",
+      400,
     );
   }
 
   if (trimmedMessage.length > MAX_MESSAGE_LENGTH) {
-    return NextResponse.json(
-      {
-        reply:
-          "Sua mensagem ficou um pouco longa. Envie uma pergunta mais objetiva sobre serviços, projetos, stack, orçamento ou contato.",
-      },
-      { status: 413 },
+    return createAssistantErrorResponse(
+      "message_too_long",
+      "Sua mensagem ficou um pouco longa. Envie uma pergunta mais objetiva sobre serviços, projetos, stack, orçamento ou contato.",
+      413,
     );
   }
 
@@ -344,15 +418,11 @@ export async function POST(request: Request) {
       retryAfter: rateLimit.retryAfter,
     });
 
-    return NextResponse.json(
-      {
-        error: "rate_limit",
-        reply: rateLimitReply,
-      },
-      {
-        headers: { "Retry-After": String(rateLimit.retryAfter) },
-        status: 429,
-      },
+    return createAssistantErrorResponse(
+      "rate_limit",
+      rateLimitReply,
+      429,
+      { "Retry-After": String(rateLimit.retryAfter) },
     );
   }
 
@@ -361,10 +431,7 @@ export async function POST(request: Request) {
   if (!apiKey) {
     logAssistantEvent("error", "missing_key");
 
-    return NextResponse.json(
-      { error: "missing_key", reply: missingKeyReply },
-      { status: 503 },
-    );
+    return createAssistantErrorResponse("missing_key", missingKeyReply, 503);
   }
 
   try {
@@ -409,10 +476,7 @@ export async function POST(request: Request) {
         model: GEMINI_MODEL,
       });
 
-      return NextResponse.json(
-        { error: "gemini_error", reply: temporaryErrorReply },
-        { status: 502 },
-      );
+      return createAssistantErrorResponse("gemini_error", temporaryErrorReply, 502);
     }
 
     if (!geminiResponse.ok) {
@@ -428,12 +492,10 @@ export async function POST(request: Request) {
         ...(errorSummary ? { errorSummary } : {}),
       });
 
-      return NextResponse.json(
-        {
-          error: isGeminiRateLimit ? "rate_limit" : "gemini_error",
-          reply: isGeminiRateLimit ? rateLimitReply : temporaryErrorReply,
-        },
-        { status: isGeminiRateLimit ? 429 : 502 },
+      return createAssistantErrorResponse(
+        isGeminiRateLimit ? "rate_limit" : "gemini_error",
+        isGeminiRateLimit ? rateLimitReply : temporaryErrorReply,
+        isGeminiRateLimit ? 429 : 502,
       );
     }
 
@@ -449,10 +511,7 @@ export async function POST(request: Request) {
         status: geminiResponse.status,
       });
 
-      return NextResponse.json(
-        { error: "gemini_error", reply: temporaryErrorReply },
-        { status: 502 },
-      );
+      return createAssistantErrorResponse("gemini_error", temporaryErrorReply, 502);
     }
 
     if (hasIncompleteGeminiOutput(data)) {
@@ -462,10 +521,7 @@ export async function POST(request: Request) {
         status: geminiResponse.status,
       });
 
-      return NextResponse.json(
-        { error: "gemini_error", reply: incompleteReply },
-        { status: 502 },
-      );
+      return createAssistantErrorResponse("gemini_error", incompleteReply, 502);
     }
 
     const reply = extractGeminiText(data);
@@ -477,10 +533,7 @@ export async function POST(request: Request) {
         status: geminiResponse.status,
       });
 
-      return NextResponse.json(
-        { error: "empty_response", reply: temporaryErrorReply },
-        { status: 502 },
-      );
+      return createAssistantErrorResponse("gemini_error", temporaryErrorReply, 502);
     }
 
     logAssistantEvent("info", "gemini_success", {
@@ -497,9 +550,6 @@ export async function POST(request: Request) {
       model: GEMINI_MODEL,
     });
 
-    return NextResponse.json(
-      { error: "unexpected_error", reply: temporaryErrorReply },
-      { status: 500 },
-    );
+    return createAssistantErrorResponse("unexpected_error", temporaryErrorReply, 500);
   }
 }

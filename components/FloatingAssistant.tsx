@@ -108,7 +108,7 @@ function WhatsAppButtonLink({ children }: { children: ReactNode }) {
     <a
       href={whatsappUrl}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className="assistant-whatsapp"
       aria-label={accessibleLabel}
     >
@@ -191,6 +191,16 @@ function isUrlText(value: string) {
   return /^https?:\/\//i.test(value) || isProjectHref(value);
 }
 
+function isSafeActionHref(href: string) {
+  if (isProjectHref(href)) return true;
+
+  try {
+    return new URL(href).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function getFriendlyLinkLabel(href: string, label?: string) {
   if (isProjectHref(href)) return "Ver projetos";
   if (isWhatsAppHref(href)) {
@@ -212,6 +222,10 @@ function renderActionLink(
 ) {
   const cleanUrl = cleanHref(href);
   const linkLabel = getFriendlyLinkLabel(cleanUrl, label);
+
+  if (!isSafeActionHref(cleanUrl)) {
+    return <span key={key}>{linkLabel}</span>;
+  }
 
   if (isProjectHref(cleanUrl)) {
     return (
@@ -237,7 +251,7 @@ function renderActionLink(
       key={key}
       href={cleanUrl}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className="assistant-action-link assistant-action-link--default"
     >
       {linkLabel}
