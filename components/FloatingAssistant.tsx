@@ -102,8 +102,16 @@ function WhatsAppIcon() {
 }
 
 function WhatsAppButtonLink({ children }: { children: ReactNode }) {
+  const accessibleLabel = typeof children === "string" ? children : "Falar com Wesley no WhatsApp";
+
   return (
-    <a href={whatsappUrl} target="_blank" rel="noreferrer" className="assistant-whatsapp">
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="assistant-whatsapp"
+      aria-label={accessibleLabel}
+    >
       <WhatsAppIcon />
       {children}
     </a>
@@ -504,6 +512,7 @@ export default function FloatingAssistant() {
             aria-busy={isLoading}
             aria-live="polite"
             aria-relevant="additions"
+            role="log"
           >
             <div className="assistant-messages__inner">
               {messages.map((message) => {
@@ -555,6 +564,7 @@ export default function FloatingAssistant() {
                 hasConversationStarted ? "assistant-suggestions--compact" : ""
               }`}
               aria-label="Perguntas rápidas"
+              role="group"
             >
               {quickSuggestions.map((suggestion) => (
                 <button
@@ -619,7 +629,7 @@ export default function FloatingAssistant() {
         aria-expanded={isOpen}
         aria-label={isOpen ? "Fechar assistente de IA" : "Abrir assistente de IA"}
       >
-        <span className="assistant-launcher__icon">
+        <span className="assistant-launcher__icon" aria-hidden="true">
           W
         </span>
         <span>Assistente IA</span>

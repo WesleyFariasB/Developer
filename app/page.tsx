@@ -27,7 +27,6 @@ type Project = {
   tag: string;
   title: string;
   description: string;
-  href: string;
   images: ProjectImage[];
 };
 
@@ -88,7 +87,6 @@ const projectShowcase: Project[] = [
     tag: "Landing Page",
     title: "Paula Corrêa",
     description: "Landing page profissional com foco em posicionamento, confiança e conversão.",
-    href: "#",
     images: [
       { alt: "Paula Corrêa - visão principal", src: imagePath("mockup1.png") },
       { alt: "Paula Corrêa - seção 1", src: imagePath("projeto1.png") },
@@ -102,7 +100,6 @@ const projectShowcase: Project[] = [
     tag: "E-commerce",
     title: "Top Brasil Presentes",
     description: "Experiência comercial responsiva para apresentação de produtos e navegação clara.",
-    href: "#",
     images: [
       { alt: "Top Brasil Presentes - visão principal", src: imagePath("mockup2.png") },
       { alt: "Top Brasil Presentes - seção 1", src: imagePath("projeto31.png") },
@@ -114,7 +111,6 @@ const projectShowcase: Project[] = [
     tag: "Automação IA",
     title: "Inteligência que conecta",
     description: "Soluções personalizadas para automarizar processos, econimizar tempo e impulsionar resultados.",
-    href: "#",
     images: [
       {
         alt: "Automacao IA - visao principal",
@@ -128,7 +124,6 @@ const projectShowcase: Project[] = [
     tag: "Portfólio Profissional",
     title: "Donkere",
     description: "Portfólio visual para marca criativa com narrativa, impacto e apresentação de serviços.",
-    href: "#",
     images: [
       { alt: "Donkere - visão principal", src: imagePath("mockup4.png") },
       { alt: "Donkere - seção 1", src: imagePath("projeto10.png") },
@@ -140,7 +135,6 @@ const projectShowcase: Project[] = [
     tag: "Sistema",
     title: "Software de gestão empresarial",
     description: "Centraliza e integra todos os dados, processos e setores de uma empresa em uma única plataforma, automatizando rotinas e facilitando a tomada de decisões.",
-    href: "#",
     images: [
       {
         alt: "Software de gestao empresarial - visao principal",
@@ -160,7 +154,6 @@ const projectShowcase: Project[] = [
     tag: "Blog",
     title: "Amalfis",
     description: "Blog institucional com hierarquia visual, leitura fluida e estrutura preparada para conteúdo.",
-    href: "#",
     images: [
       { alt: "Amalfis - visão principal", src: imagePath("mockup3.png") },
       { alt: "Amalfis - seção 1", src: imagePath("projeto21.png") },
@@ -175,6 +168,13 @@ const projectLoopCopies = 3;
 const projectDragThreshold = 8;
 const projectMobileMediaQuery = "(max-width: 767px)";
 const serviceAutoAdvanceDuration = 5200;
+
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const isProjectMobileViewport = () =>
+  typeof window !== "undefined" && window.matchMedia(projectMobileMediaQuery).matches;
 
 const projectMarqueeRows = [
   [0, 1, 2],
@@ -300,6 +300,8 @@ export default function Home() {
   const [serviceProgressKey, setServiceProgressKey] = useState(0);
   const [metricValues, setMetricValues] = useState(() => aboutMetrics.map(() => 0));
   const [isLoading, setIsLoading] = useState(true);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const projectMarqueeRefs = useRef<(HTMLDivElement | null)[]>([]);
   const projectTrackRefs = useRef<(HTMLDivElement | null)[]>([]);
   const projectLoopWidthsRef = useRef<number[]>([]);
   const projectOffsetsRef = useRef<number[]>([0, 0]);
@@ -325,6 +327,9 @@ export default function Home() {
   const servicesSectionRef = useRef<HTMLElement | null>(null);
   const aboutSectionRef = useRef<HTMLElement | null>(null);
   const metricsStartedRef = useRef(false);
+  const modalDialogRef = useRef<HTMLDivElement | null>(null);
+  const modalCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const focusedBeforeModalRef = useRef<HTMLElement | null>(null);
 
   const activeProject = useMemo(
     () =>
@@ -333,7 +338,42 @@ export default function Home() {
   );
 
   useEffect(() => {
-    AOS.init({ once: false, mirror: true, duration: 900, easing: "ease-out-cubic" });
+    let frame = 0;
+
+    const updateBackToTopVisibility = () => {
+      frame = 0;
+      setShowBackToTop(window.scrollY > 240);
+    };
+
+    const handleScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateBackToTopVisibility);
+    };
+
+    updateBackToTopVisibility();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      top: 0,
+    });
+  }, []);
+
+  useEffect(() => {
+    AOS.init({
+      disable: prefersReducedMotion(),
+      duration: 900,
+      easing: "ease-out-cubic",
+      mirror: true,
+      once: false,
+    });
   }, []);
 
   useEffect(() => {
@@ -364,8 +404,15 @@ export default function Home() {
   }, []);
 
   const renderProjectTracks = useCallback(() => {
+    const useNativeMobileScroll = isProjectMobileViewport();
+
     projectTrackRefs.current.forEach((track, index) => {
       if (!track) return;
+
+      if (useNativeMobileScroll) {
+        track.style.transform = "";
+        return;
+      }
 
       const loopWidth = projectLoopWidthsRef.current[index] || track.scrollWidth / projectLoopCopies;
       if (!loopWidth) return;
@@ -412,6 +459,17 @@ export default function Home() {
   const nudgeProjectRows = useCallback(
     (direction: number) => {
       pauseProjectMotion(900);
+
+      if (isProjectMobileViewport()) {
+        projectMarqueeRefs.current.forEach((marquee) => {
+          marquee?.scrollBy({
+            behavior: prefersReducedMotion() ? "auto" : "smooth",
+            left: direction * marquee.clientWidth * 0.88,
+          });
+        });
+        return;
+      }
+
       projectOffsetsRef.current = projectOffsetsRef.current.map(
         (offset) => offset + direction * 420,
       );
@@ -423,6 +481,8 @@ export default function Home() {
   const openProjectModal = useCallback((projectIndex: number) => {
     if (!projectShowcase[projectIndex]) return;
 
+    focusedBeforeModalRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setActiveImageIndex(0);
     setActiveProjectIndex(projectIndex);
   }, []);
@@ -430,6 +490,10 @@ export default function Home() {
   const handleProjectPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, rowIndex: number) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
+      if (event.pointerType !== "mouse" && isProjectMobileViewport()) {
+        pauseProjectMotion(900);
+        return;
+      }
 
       const target = event.target;
       const projectButton =
@@ -661,6 +725,7 @@ export default function Home() {
 
     const syncProjectMotionLock = () => {
       projectMobileInViewRef.current = mobileQuery.matches && isSectionVisible;
+      renderProjectTracks();
 
       if (projectMobileInViewRef.current) {
         pauseProjectMotion();
@@ -702,7 +767,7 @@ export default function Home() {
       projectMobileInViewRef.current = false;
       resumeProjectMotion();
     };
-  }, [pauseProjectMotion, resumeProjectMotion]);
+  }, [pauseProjectMotion, renderProjectTracks, resumeProjectMotion]);
 
   useEffect(() => {
     const section = servicesSectionRef.current;
@@ -777,8 +842,15 @@ export default function Home() {
   }, []);
 
   const closeModal = useCallback(() => {
+    const previousFocus = focusedBeforeModalRef.current;
+
     setActiveProjectIndex(null);
     setActiveImageIndex(0);
+    focusedBeforeModalRef.current = null;
+
+    window.setTimeout(() => {
+      previousFocus?.focus();
+    }, 0);
   }, []);
 
   const showPrevious = useCallback(() => {
@@ -806,10 +878,38 @@ export default function Home() {
       if (event.key === "Escape") closeModal();
       if (event.key === "ArrowLeft") showPrevious();
       if (event.key === "ArrowRight") showNext();
+
+      if (event.key === "Tab") {
+        const dialog = modalDialogRef.current;
+        if (!dialog) return;
+
+        const focusableElements = Array.from(
+          dialog.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((element) => !element.hasAttribute("aria-hidden"));
+
+        if (focusableElements.length === 0) {
+          event.preventDefault();
+          return;
+        }
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (event.shiftKey && document.activeElement === firstElement) {
+          event.preventDefault();
+          lastElement.focus();
+        } else if (!event.shiftKey && document.activeElement === lastElement) {
+          event.preventDefault();
+          firstElement.focus();
+        }
+      }
     };
 
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown);
+    window.setTimeout(() => modalCloseButtonRef.current?.focus(), 0);
 
     return () => {
       document.body.style.overflow = "";
@@ -822,6 +922,7 @@ export default function Home() {
     {isLoading && <SiteSkeleton />}
 
     <div
+      id="topo"
       className={`min-h-screen bg-white text-ink transition-opacity duration-500 ${
         isLoading ? "opacity-0" : "opacity-100"
       }`}
@@ -829,7 +930,7 @@ export default function Home() {
     >
       <a
         href="#conteudo"
-        className="sr-only absolute left-4 top-4 z-[60] rounded-md bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm focus:not-sr-only"
+        className="sr-only absolute left-4 top-4 z-[60] rounded-md bg-white px-3 py-2 text-sm font-medium text-ink shadow-sm focus:not-sr-only focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
       >
         Pular para o conteúdo
       </a>
@@ -839,9 +940,10 @@ export default function Home() {
         data-aos="fade-down"
       >
         <div className="flex items-center gap-2">
-          <span className="brand-mark brand-mark--site">
+          <span className="brand-mark brand-mark--site" aria-hidden="true">
             W
           </span>
+          <span className="sr-only">Wesley Farias</span>
         </div>
 
         <nav className="hidden gap-6 text-sm text-ink/80 md:flex" aria-label="Navegação principal">
@@ -872,6 +974,7 @@ export default function Home() {
           ref={projectsSectionRef}
           className="page-shell relative isolate pb-20 pt-24 md:pt-32"
           data-aos="fade-in"
+          aria-labelledby="projetos-title"
         >
           <div className="hero-tech-shell" aria-hidden="true">
             <div className="hero-tech">
@@ -900,7 +1003,7 @@ export default function Home() {
           <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="relative z-10">
               <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.2em] text-ink/60">
-                <span className="font-semibold tracking-[0.3em] text-[#d3a52f]">★★★★★</span>
+                <span className="font-semibold tracking-[0.3em] text-[#d3a52f]" aria-label="Avaliacao cinco estrelas">★★★★★</span>
                 <div className="flex -space-x-2" aria-label="Pessoas que aprovaram o trabalho">
                   {approvalAvatars.map((avatar, index) => (
                     <span
@@ -924,7 +1027,7 @@ export default function Home() {
               </div>
 
               <div className="mt-8 max-w-[900px]">
-                <h1 className="text-[2.25rem] font-bold leading-[1.12] tracking-[-0.02em] text-ink sm:text-5xl sm:leading-[1.04] md:text-6xl md:leading-[1.02] xl:text-[3rem]">
+                <h1 id="projetos-title" className="text-[2.25rem] font-bold leading-[1.12] tracking-[-0.02em] text-ink sm:text-5xl sm:leading-[1.04] md:text-6xl md:leading-[1.02] xl:text-[3rem]">
                   Transformo ideias em sites, sistemas e aplicativos de alta performance.
                 </h1>
                 <p className="mt-5 text-base leading-relaxed text-graphite md:text-lg">
@@ -946,7 +1049,7 @@ export default function Home() {
                       href="https://www.linkedin.com/in/wesleyfariasbe/"
                       target="_blank"
                       rel="noreferrer"
-                      aria-label="LinkedIn"
+                      aria-label="Abrir LinkedIn de Wesley Farias"
                       className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/20 outline-none transition-all duration-200 hover:-translate-y-[1px] hover:border-ink/30 hover:bg-ink/5 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4 active:translate-y-0"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
@@ -958,7 +1061,7 @@ export default function Home() {
                       href="https://www.instagram.com/visualswf/"
                       target="_blank"
                       rel="noreferrer"
-                      aria-label="Instagram"
+                      aria-label="Abrir Instagram de Wesley Farias"
                       className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/20 outline-none transition-all duration-200 hover:-translate-y-[1px] hover:border-ink/30 hover:bg-ink/5 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4 active:translate-y-0"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
@@ -971,7 +1074,7 @@ export default function Home() {
                       href="https://github.com/WesleyFariasB"
                       target="_blank"
                       rel="noreferrer"
-                      aria-label="GitHub"
+                      aria-label="Abrir GitHub de Wesley Farias"
                       className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/20 outline-none transition-all duration-200 hover:-translate-y-[1px] hover:border-ink/30 hover:bg-ink/5 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4 active:translate-y-0"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
@@ -992,6 +1095,8 @@ export default function Home() {
 
           <div
             className="project-marquee-shell mt-5"
+            aria-label="Projetos em destaque"
+            role="region"
             onMouseEnter={() => {
               projectHoveringRef.current = true;
               pauseProjectMotion();
@@ -1041,8 +1146,12 @@ export default function Home() {
               {projectMarqueeRows.map((row, rowIndex) => (
                 <div
                   key={`project-marquee-${rowIndex}`}
+                  ref={(node) => {
+                    projectMarqueeRefs.current[rowIndex] = node;
+                  }}
                   className="project-marquee"
                   aria-label={`Linha ${rowIndex + 1} de projetos em destaque`}
+                  role="group"
                   onPointerDown={(event) => handleProjectPointerDown(event, rowIndex)}
                   onPointerMove={handleProjectPointerMove}
                   onPointerUp={finishProjectPointer}
@@ -1068,6 +1177,8 @@ export default function Home() {
                           onClick={(event) => handleProjectClick(event, projectIndex)}
                           className="project-marquee__item group rounded-3xl text-left outline-none transition-transform duration-200 hover:-translate-y-[2px] focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4"
                           aria-label={`Abrir projeto ${project.title}`}
+                          aria-hidden={copyIndex > 0}
+                          tabIndex={copyIndex === 0 ? 0 : -1}
                         >
                           <article className="relative overflow-hidden rounded-3xl bg-white transition-all duration-300 group-hover:shadow-card">
                             <span className="absolute left-4 top-4 z-10 inline-flex translate-y-2 rounded-full border border-ink/10 bg-white/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/70 opacity-0 shadow-card transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
@@ -1108,6 +1219,7 @@ export default function Home() {
           id="servicos"
           ref={servicesSectionRef}
           className="page-shell border-t border-fog py-16"
+          aria-labelledby="servicos-title"
         >
           <div className="text-sm text-ink/70">
             (Como posso ajudar?)
@@ -1138,7 +1250,7 @@ export default function Home() {
             </div>
 
             <div className="space-y-8">
-              <h2 className="text-2xl font-semibold leading-snug md:text-3xl">
+              <h2 id="servicos-title" className="text-2xl font-semibold leading-snug md:text-3xl">
                 Soluções digitais completas para marcas que precisam de performance, escala e
                 consistência técnica.
               </h2>
@@ -1156,6 +1268,7 @@ export default function Home() {
                     className={`grid w-full grid-cols-[48px_1fr] gap-1 py-8 text-left outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-[#2563eb]/30 focus-visible:ring-offset-4 ${
                       index === services.length - 1 ? "" : "border-b border-fog"
                     }`}
+                    aria-label={`Selecionar servico ${service.title}`}
                     aria-pressed={isActive}
                   >
                     <div
@@ -1198,6 +1311,7 @@ export default function Home() {
           ref={aboutSectionRef}
           className="page-shell border-t border-fog py-20"
           data-aos="fade-up"
+          aria-labelledby="sobre-title"
         >
           <div className="overflow-hidden rounded-[28px] bg-mist p-5 md:p-8">
             <div className="grid gap-8 lg:grid-cols-[0.72fr_1.1fr_1.18fr] lg:items-center">
@@ -1214,7 +1328,7 @@ export default function Home() {
 
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#2563eb]">Sobre</p>
-                <h2 className="mt-3 max-w-xl text-2xl font-bold leading-tight tracking-[-0.01em] md:text-4xl">
+                <h2 id="sobre-title" className="mt-3 max-w-xl text-2xl font-bold leading-tight tracking-[-0.01em] md:text-4xl">
                   Transformo ideias em produtos digitais funcionais e escaláveis.
                 </h2>
                 <p className="mt-4 max-w-xl text-sm leading-relaxed text-graphite md:text-base">
@@ -1269,8 +1383,8 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="stack" className="page-shell border-t border-fog py-12">
-          <div className="text-sm text-ink/70">(Stack e Especialidades)</div>
+        <section id="stack" className="page-shell border-t border-fog py-12" aria-labelledby="stack-title">
+          <h2 id="stack-title" className="text-sm font-normal text-ink/70">(Stack e Especialidades)</h2>
 
           <div className="marquee mt-6 rounded-[28px] bg-white py-4">
             <div className="marquee__track">
@@ -1293,6 +1407,7 @@ export default function Home() {
           <a
             href="https://api.whatsapp.com/send?phone=5583986036971&text=Ol%C3%A1%2C%20quero%20falar%20sobre%20um%20projeto"
             className="rounded-md underline underline-offset-4 outline-none transition-opacity duration-200 hover:opacity-75 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4"
+            aria-label="Entrar em contato pelo WhatsApp"
           >
             Contato
           </a>
@@ -1300,20 +1415,30 @@ export default function Home() {
       </footer>
 
       {activeProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 px-6 py-10">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 px-6 py-10"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeModal();
+            }
+          }}
+        >
           <div
+            ref={modalDialogRef}
             className="relative w-full max-w-4xl rounded-[32px] bg-white p-6"
             role="dialog"
             aria-modal="true"
-            aria-label={`Galeria do projeto ${activeProject.title}`}
+            aria-labelledby="project-modal-title"
+            aria-describedby="project-modal-help"
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-ink/50">{activeProject.tag}</p>
-                <h3 className="text-lg font-semibold">{activeProject.title}</h3>
+                <h3 id="project-modal-title" className="text-lg font-semibold">{activeProject.title}</h3>
               </div>
 
               <button
+                ref={modalCloseButtonRef}
                 type="button"
                 onClick={closeModal}
                 className="rounded-full border border-ink/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink/70 outline-none transition-all duration-200 hover:-translate-y-[1px] hover:bg-ink hover:text-white focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-4"
@@ -1389,7 +1514,7 @@ export default function Home() {
               </div>
             )}
 
-            <div className="mt-4 flex items-center justify-between text-xs text-ink/60">
+            <div id="project-modal-help" className="mt-4 flex items-center justify-between text-xs text-ink/60">
               <span>
                 {activeImageIndex + 1} / {activeProject.images.length}
               </span>
@@ -1397,6 +1522,27 @@ export default function Home() {
             </div>
           </div>
         </div>
+      )}
+
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          className="back-to-top"
+          aria-label="Voltar ao topo"
+          title="Voltar ao topo"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 19V5m0 0-6 6m6-6 6 6"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.4"
+            />
+          </svg>
+        </button>
       )}
 
       <FloatingAssistant />
