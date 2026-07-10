@@ -1051,6 +1051,11 @@ h6 {
 }
 
 @media (max-width: 767px) {
+  .project-marquee-shell::before,
+  .project-marquee-shell::after {
+    display: none;
+  }
+
   .hero-tech-shell {
     height: 29rem;
     opacity: 0.28;
@@ -1079,8 +1084,17 @@ h6 {
 
   .project-marquee__item {
     flex-basis: min(82vw, 22rem);
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
+    scroll-snap-align: none;
+    scroll-snap-stop: normal;
+  }
+
+  .project-marquee__item:hover {
+    transform: none;
+  }
+
+  .project-marquee__item > article,
+  .project-marquee__item > article > span {
+    box-shadow: none !important;
   }
 
   .project-marquee {
@@ -1090,7 +1104,7 @@ h6 {
     overflow-x: auto;
     padding: 0.15rem 1.5rem 0.65rem;
     scroll-padding-inline: 1.5rem;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: none;
     scrollbar-width: none;
     touch-action: pan-x pan-y;
   }
