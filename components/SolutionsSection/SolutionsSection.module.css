@@ -1,0 +1,345 @@
+.section {
+  --solutions-primary: var(--brand-blue);
+  border-top: 1px solid rgb(17 17 17 / 9%);
+  overflow-x: clip;
+  padding: 4rem 0;
+}
+
+.header {
+  max-width: none;
+  padding-bottom: 2.5rem;
+}
+
+.eyebrow,
+.cardNumber,
+.technologyName {
+  font-family: var(--font-mono);
+}
+
+.eyebrow {
+  color: rgb(17 17 17 / 68%);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.title {
+  color: #111111;
+  font-size: clamp(1.75rem, 3.1vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  margin-top: 0.75rem;
+  max-width: 42rem;
+}
+
+.introduction {
+  color: #4b4b4b;
+  font-size: 0.975rem;
+  line-height: 1.65;
+  margin-top: 1rem;
+  max-width: 42rem;
+}
+
+@media (min-width: 768px) {
+  .header {
+    align-items: start;
+    column-gap: clamp(4rem, 7vw, 7rem);
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.65fr);
+  }
+
+  .eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  .title {
+    grid-column: 1;
+  }
+
+  .introduction {
+    grid-column: 2;
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-top: 0.7rem;
+  }
+}
+
+.solutionGrid {
+  border-left: 1px solid rgb(17 17 17 / 14%);
+  border-top: 1px solid rgb(17 17 17 / 14%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.solutionCard {
+  background: #f4f4f4;
+  border-bottom: 1px solid rgb(17 17 17 / 14%);
+  border-right: 1px solid rgb(17 17 17 / 14%);
+  color: #111111;
+  display: flex;
+  flex-direction: column;
+  min-height: 26rem;
+  padding: 1.75rem;
+  position: relative;
+  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
+}
+
+.solutionCard:nth-child(2),
+.solutionCard:nth-child(5) {
+  --reveal-delay: 90ms;
+}
+
+.solutionCard:nth-child(3),
+.solutionCard:nth-child(6) {
+  --reveal-delay: 180ms;
+}
+
+.solutionCard:hover,
+.solutionCard:focus-within {
+  background: var(--solutions-primary);
+  border-color: var(--solutions-primary);
+  color: #ffffff;
+}
+
+.cardNumber {
+  color: rgb(17 17 17 / 52%);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  position: absolute;
+  right: 1.75rem;
+  top: 1.75rem;
+  transition: color 300ms ease;
+}
+
+.solutionIcon {
+  align-items: center;
+  color: var(--solutions-primary);
+  display: inline-flex;
+  height: 3rem;
+  justify-content: center;
+  transition: color 300ms ease;
+  width: 3rem;
+}
+
+.solutionIcon svg {
+  height: 2.5rem;
+  stroke-width: 1.8;
+  width: 2.5rem;
+}
+
+.cardContent {
+  margin-top: auto;
+  padding-top: 2.5rem;
+}
+
+.cardTitle {
+  color: currentColor;
+  font-size: clamp(1.8rem, 3.2vw, 2.55rem);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.cardSubtitle {
+  color: #111111;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.35rem;
+  transition: color 300ms ease;
+}
+
+.cardDescription {
+  color: #4b4b4b;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  margin-top: 0.55rem;
+  transition: color 300ms ease;
+}
+
+.cardNote {
+  border-left: 2px solid currentColor;
+  color: #4b4b4b;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  margin-top: 0.8rem;
+  padding-left: 0.7rem;
+  transition: color 300ms ease;
+}
+
+.solutionCard:hover .cardNumber,
+.solutionCard:hover .solutionIcon,
+.solutionCard:hover .cardSubtitle,
+.solutionCard:hover .cardDescription,
+.solutionCard:hover .cardNote,
+.solutionCard:focus-within .cardNumber,
+.solutionCard:focus-within .solutionIcon,
+.solutionCard:focus-within .cardSubtitle,
+.solutionCard:focus-within .cardDescription,
+.solutionCard:focus-within .cardNote {
+  color: #ffffff;
+}
+
+.technologyMarquee {
+  border-bottom: 1px solid rgb(17 17 17 / 10%);
+  border-top: 1px solid rgb(17 17 17 / 10%);
+  margin-top: 2.5rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.technologyTrack {
+  animation: technology-scroll 32s linear infinite;
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.technologyMarquee:hover .technologyTrack,
+.technologyMarquee:focus .technologyTrack,
+.technologyMarquee:focus-within .technologyTrack {
+  animation-play-state: paused;
+}
+
+.technologyGroup {
+  display: flex;
+  flex: none;
+  margin: 0;
+  padding: 0;
+}
+
+.technologyItem {
+  align-items: center;
+  border-right: 1px solid rgb(17 17 17 / 10%);
+  display: flex;
+  flex: none;
+  gap: 0.75rem;
+  justify-content: center;
+  min-height: 6.5rem;
+  padding: 0.75rem 1.25rem;
+  width: 10.5rem;
+}
+
+.technologyIcon {
+  align-items: center;
+  background: #f4f4f4;
+  border-radius: 999px;
+  color: var(--technology-color);
+  display: inline-flex;
+  flex: none;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
+}
+
+.technologyIcon svg {
+  height: 1.35rem;
+  width: 1.35rem;
+}
+
+.technologyName {
+  color: #111111;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  max-width: 5rem;
+}
+
+@keyframes technology-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (min-width: 768px) {
+  .solutionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .solutionCard {
+    padding: 2rem;
+  }
+
+  .cardNumber {
+    right: 2rem;
+    top: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .solutionGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .solutionCard {
+    min-height: 27.5rem;
+    padding: 2.25rem 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 3.25rem 0;
+  }
+
+  .header {
+    padding-bottom: 2rem;
+  }
+
+  .solutionCard {
+    min-height: 25rem;
+    padding: 1.5rem;
+  }
+
+  .cardNumber {
+    right: 1.5rem;
+    top: 1.5rem;
+  }
+
+  .technologyMarquee {
+    margin-top: 2rem;
+  }
+
+  .technologyItem {
+    gap: 0.6rem;
+    min-height: 5.75rem;
+    padding: 0.75rem 1rem;
+    width: 9.25rem;
+  }
+
+  .technologyIcon {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .technologyMarquee {
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .technologyTrack {
+    animation: none;
+  }
+
+  .technologyGroup[aria-hidden="true"] {
+    display: none;
+  }
+
+  .solutionCard,
+  .cardNumber,
+  .solutionIcon,
+  .cardSubtitle,
+  .cardDescription,
+  .cardNote {
+    transition: none;
+  }
+}

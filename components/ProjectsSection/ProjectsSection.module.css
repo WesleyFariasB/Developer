@@ -1,0 +1,386 @@
+.section {
+  --projects-surface: #eef5ff;
+  --projects-ink: #10213e;
+  --projects-gutter: clamp(1.25rem, 2.5vw, 3rem);
+  background:
+    radial-gradient(circle at 88% 8%, rgb(37 99 235 / 13%), transparent 25rem),
+    linear-gradient(180deg, #f7fbff 0%, var(--projects-surface) 100%);
+  color: var(--projects-ink);
+  overflow: visible;
+  padding: clamp(4.5rem, 8vw, 7rem) var(--projects-gutter) clamp(5rem, 9vw, 8rem);
+}
+
+.container {
+  margin: 0 auto;
+  max-width: none;
+}
+
+.header {
+  max-width: 48rem;
+  padding-bottom: clamp(3.5rem, 7vw, 6rem);
+}
+
+.eyebrow,
+.category,
+.technologies,
+.modalCategory,
+.modalHelp,
+.placeholderNote {
+  font-family: var(--font-mono);
+}
+
+.eyebrow {
+  color: rgb(30 64 175 / 72%);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  color: var(--projects-ink);
+  font-size: clamp(2.4rem, 5vw, 4.75rem);
+  font-weight: 730;
+  letter-spacing: -0.06em;
+  line-height: 0.92;
+  margin-top: 0.85rem;
+}
+
+.introduction {
+  color: #475569;
+  font-size: clamp(0.98rem, 1.35vw, 1.12rem);
+  line-height: 1.65;
+  margin-top: 1.35rem;
+  max-width: 42rem;
+}
+
+.stack {
+  display: grid;
+}
+
+.stickyItem {
+  --card-height: min(35rem, 68svh);
+  display: block;
+  min-height: calc(var(--card-height) + 36vh);
+  position: relative;
+  z-index: calc(10 + var(--project-index));
+}
+
+.stickyItem:last-child {
+  min-height: calc(var(--card-height) + 36vh);
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid rgb(37 99 235 / 15%);
+  border-radius: clamp(1.25rem, 2vw, 1.8rem);
+  box-shadow: 0 24px 64px rgb(30 64 175 / 10%);
+  height: var(--card-height);
+  overflow: hidden;
+  position: relative;
+  transform-origin: center center;
+  will-change: transform;
+  width: 100%;
+  z-index: calc(10 + var(--project-index));
+}
+
+.cardButton {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  height: 100%;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.cardButton:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: -5px;
+}
+
+.cardCopy {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  padding: clamp(1.5rem, 4.25vw, 4.25rem);
+}
+
+.category {
+  color: rgb(30 64 175 / 66%);
+  font-size: 0.72rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.cardFooter {
+  display: grid;
+  gap: clamp(0.7rem, 1.2vw, 1rem);
+}
+
+.projectName {
+  color: #1e3a8a;
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.summary {
+  color: #10213e;
+  font-size: clamp(1.35rem, 2.5vw, 2.25rem);
+  font-weight: 650;
+  letter-spacing: -0.052em;
+  line-height: 1.08;
+  max-width: 24ch;
+}
+
+.technologies,
+.placeholderNote {
+  color: #64748b;
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+}
+
+.cta {
+  align-items: center;
+  align-self: start;
+  background: #10213e;
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 0.4rem;
+  padding: 0.66rem 0.95rem;
+  transition: background-color 180ms ease, transform 180ms ease;
+  width: max-content;
+}
+
+.cardButton:hover .cta,
+.cardButton:focus-visible .cta {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.imageFrame {
+  background: #dbeafe;
+  display: block;
+  overflow: hidden;
+  position: relative;
+}
+
+.imageFrame :global(img) {
+  object-fit: contain;
+  object-position: center;
+  transition: transform 450ms ease;
+}
+
+.cardButton:hover .imageFrame :global(img),
+.cardButton:focus-visible .imageFrame :global(img) {
+  transform: scale(1.025);
+}
+
+.placeholderCard {
+  background: #f8fbff;
+}
+
+.placeholderVisual {
+  background:
+    linear-gradient(rgb(37 99 235 / 11%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(37 99 235 / 11%) 1px, transparent 1px),
+    radial-gradient(circle at 55% 42%, rgb(37 99 235 / 17%), transparent 20rem),
+    #eff6ff;
+  background-size: 2rem 2rem, 2rem 2rem, auto, auto;
+}
+
+.placeholderVisual span {
+  border: 1px solid rgb(37 99 235 / 24%);
+  border-radius: 999px;
+  inset: 50% auto auto 50%;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.placeholderVisual span:nth-child(1) {
+  height: 12rem;
+  width: 12rem;
+}
+
+.placeholderVisual span:nth-child(2) {
+  height: 20rem;
+  width: 20rem;
+}
+
+.placeholderVisual span:nth-child(3) {
+  background: #2563eb;
+  box-shadow: 0 0 0 0.55rem rgb(37 99 235 / 13%);
+  height: 0.75rem;
+  width: 0.75rem;
+}
+
+.modalBackdrop {
+  align-items: center;
+  background: rgb(15 23 42 / 76%);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1.5rem;
+  position: fixed;
+  z-index: 90;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  color: #111111;
+  max-height: calc(100dvh - 3rem);
+  max-width: 64rem;
+  overflow: auto;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  width: 100%;
+}
+
+.modalHeader {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.modalHeader h3 {
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.modalCategory {
+  color: rgb(17 17 17 / 52%);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+}
+
+.closeButton,
+.previousButton,
+.nextButton {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgb(17 17 17 / 14%);
+  color: #111111;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 650;
+  justify-content: center;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.closeButton {
+  border-radius: 999px;
+  padding: 0.55rem 0.8rem;
+}
+
+.closeButton:hover,
+.closeButton:focus-visible,
+.previousButton:hover,
+.previousButton:focus-visible,
+.nextButton:hover,
+.nextButton:focus-visible {
+  background: #111111;
+  color: #ffffff;
+  outline: none;
+}
+
+.modalImage {
+  margin-top: 1.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.previousButton,
+.nextButton {
+  border-radius: 999px;
+  height: 2.5rem;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+}
+
+.previousButton { left: 1rem; }
+.nextButton { right: 1rem; }
+
+.thumbnails {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.thumbnail {
+  border: 1px solid rgb(17 17 17 / 12%);
+  flex: 0 0 auto;
+  height: 4rem;
+  opacity: 0.65;
+  overflow: hidden;
+  position: relative;
+  width: 6rem;
+}
+
+.thumbnail:focus-visible,
+.thumbnailSelected {
+  border-color: #111111;
+  opacity: 1;
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.modalHelp {
+  color: rgb(17 17 17 / 54%);
+  display: flex;
+  font-size: 0.7rem;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+@media (max-width: 799px) {
+  .section { --projects-gutter: 1.25rem; }
+
+  .stickyItem {
+    --card-height: auto;
+    min-height: 0;
+    padding-bottom: 2rem;
+  }
+
+  .stickyItem:last-child { min-height: 0; }
+
+  .card {
+    height: auto;
+    position: relative;
+    top: auto;
+  }
+
+  .cardButton {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .cardCopy { min-height: 20rem; }
+
+  .imageFrame { aspect-ratio: 1.13 / 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .cardButton,
+  .cta,
+  .imageFrame :global(img) {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none;
+  }
+}

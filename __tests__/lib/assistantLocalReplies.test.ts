@@ -5,7 +5,7 @@ describe("getLocalAssistantReply", () => {
     const reply = getLocalAssistantReply("Quais serviços você oferece?");
 
     expect(reply).toContain("soluções digitais completas");
-    expect(reply).toContain("Arquitetura Front-end");
+    expect(reply).toContain("Front-End");
   });
 
   it("returns a budget reply when the user asks about pricing", () => {

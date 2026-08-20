@@ -23,15 +23,11 @@ const createJsonRequest = (
 const readJson = async (response: Response) => response.json() as Promise<Record<string, unknown>>;
 
 describe("POST /api/assistant", () => {
-  let consoleErrorSpy: jest.SpyInstance;
-  let consoleInfoSpy: jest.SpyInstance;
-  let consoleWarnSpy: jest.SpyInstance;
-
   beforeEach(() => {
     delete process.env.GEMINI_API_KEY;
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
-    consoleInfoSpy = jest.spyOn(console, "info").mockImplementation(() => undefined);
-    consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    jest.spyOn(console, "error").mockImplementation(() => undefined);
+    jest.spyOn(console, "info").mockImplementation(() => undefined);
+    jest.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {

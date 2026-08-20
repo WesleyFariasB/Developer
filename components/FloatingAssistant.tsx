@@ -45,6 +45,9 @@ const fallbackReply = "Tive uma instabilidade rápida. Aguarde alguns segundos e
 const rateLimitReply =
   "Recebi muitas solicitações em sequência. Aguarde alguns segundos e tente novamente.";
 
+const preferredScrollBehavior = (): ScrollBehavior =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+
 function createMessageId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -342,6 +345,8 @@ export default function FloatingAssistant() {
   const [isCoolingDown, setIsCoolingDown] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const launcherRef = useRef<HTMLButtonElement | null>(null);
+  const wasOpenRef = useRef(false);
   const sendLockRef = useRef(false);
   const cooldownTimeoutRef = useRef<number | null>(null);
   const lastSubmissionRef = useRef<{ content: string; at: number } | null>(null);
@@ -351,7 +356,7 @@ export default function FloatingAssistant() {
   useEffect(() => {
     if (!isOpen) return;
 
-    messagesEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ block: "end", behavior: preferredScrollBehavior() });
   }, [isOpen, isLoading, messages]);
 
   useEffect(() => {
@@ -364,9 +369,24 @@ export default function FloatingAssistant() {
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    window.setTimeout(() => inputRef.current?.focus(), 120);
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 120);
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      wasOpenRef.current = true;
+      return;
+    }
+
+    if (wasOpenRef.current) {
+      launcherRef.current?.focus();
+      wasOpenRef.current = false;
+    }
   }, [isOpen]);
 
   useEffect(() => {
@@ -390,7 +410,10 @@ export default function FloatingAssistant() {
   };
 
   const scrollToProjects = () => {
-    document.getElementById("projetos")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("projetos")?.scrollIntoView({
+      behavior: preferredScrollBehavior(),
+      block: "start",
+    });
 
     if (window.matchMedia("(max-width: 767px)").matches) {
       setIsOpen(false);
@@ -636,6 +659,7 @@ export default function FloatingAssistant() {
       )}
 
       <button
+        ref={launcherRef}
         type="button"
         onClick={() => setIsOpen((current) => !current)}
         className="assistant-launcher"

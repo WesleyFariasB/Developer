@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import "aos/dist/aos.css";
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-primary",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
 
 const siteUrl =
   process.env.SITE_URL ??
@@ -16,6 +26,9 @@ export const metadata: Metadata = {
   title: "Wesley Farias | Full Stack com Next.js e NestJS",
   description:
     "Desenvolvedor Full Stack com foco em React.js, Next.js, TypeScript, Node.js e NestJS. Desenvolvimento de aplicações web modernas, performáticas, escaláveis e otimizadas para SEO.",
+  alternates: {
+    canonical: "/",
+  },
   keywords: [
     "React.js",
     "Next.js",
@@ -37,14 +50,14 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/images/about.png",
-        width: 1200,
-        height: 630,
-        alt: "Wesley Farias",
+        width: 1024,
+        height: 1031,
+        alt: "Retrato de Wesley Farias, desenvolvedor Full Stack",
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Wesley Farias | Full Stack com Next.js e NestJS",
     description:
       "Projetos web com React.js, Next.js, TypeScript, Node.js e NestJS, com foco em SEO técnico e performance.",
@@ -59,7 +72,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className="bg-white text-ink antialiased">
+      <body className={`${geist.variable} ${geistMono.variable} bg-white text-ink antialiased`}>
         {children}
         <Analytics />
       </body>

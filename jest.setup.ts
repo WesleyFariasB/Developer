@@ -1,10 +1,29 @@
 import "@testing-library/jest-dom";
 import React from "react";
 
-jest.mock("aos", () => ({
-  __esModule: true,
-  default: {
-    init: jest.fn(),
+jest.mock("gsap", () => {
+  const timeline = {
+    to: jest.fn().mockReturnThis(),
+  };
+
+  return {
+    gsap: {
+      context: (callback: () => void) => {
+        callback();
+        return { revert: jest.fn() };
+      },
+      fromTo: jest.fn(),
+      registerPlugin: jest.fn(),
+      set: jest.fn(),
+      timeline: jest.fn(() => timeline),
+    },
+  };
+});
+
+jest.mock("gsap/ScrollTrigger", () => ({
+  ScrollTrigger: {
+    create: jest.fn(),
+    getById: jest.fn(() => ({ kill: jest.fn() })),
     refresh: jest.fn(),
   },
 }));
@@ -62,15 +81,6 @@ if (typeof window !== "undefined") {
     unobserve = jest.fn();
   }
 
-  class MockImage {
-    onerror: (() => void) | null = null;
-    onload: (() => void) | null = null;
-
-    set src(_value: string) {
-      window.setTimeout(() => this.onload?.(), 0);
-    }
-  }
-
   Object.defineProperty(window, "IntersectionObserver", {
     configurable: true,
     value: MockIntersectionObserver,
@@ -79,11 +89,6 @@ if (typeof window !== "undefined") {
   Object.defineProperty(window, "ResizeObserver", {
     configurable: true,
     value: MockResizeObserver,
-  });
-
-  Object.defineProperty(window, "Image", {
-    configurable: true,
-    value: MockImage,
   });
 
   Object.defineProperty(window, "matchMedia", {

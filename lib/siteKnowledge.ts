@@ -52,40 +52,54 @@ export const siteKnowledge = {
   },
   navigation: [
     { label: "Projetos", href: "#projetos" },
-    { label: "Serviços", href: "#servicos" },
-    { label: "Sobre", href: "#sobre" },
-    { label: "Stack", href: "#stack" },
+    { label: "Trajetória", href: "#trajetoria" },
+    { label: "Soluções", href: "#servicos" },
+    { label: "Contato", href: "#contato" },
   ],
-  trustSignals: [
-    "Projetos desenvolvidos para negócios em todo o Brasil.",
-    "★★★★★",
-  ],
-  servicesIntro:
-    "Soluções digitais completas para marcas que precisam de performance, escala e consistência técnica.",
   services: [
     {
       id: "01",
-      title: "Arquitetura Front-end com React.js e Next.js",
+      title: "Front-End",
+      subtitle: "Interfaces web e mobile",
       description:
-        "Planejamento e implementação de interfaces modernas com componentização, design system, SSR e SSG no App Router para melhorar performance, UX e SEO técnico.",
+        "Desenvolvimento de interfaces responsivas, acessíveis e componentizadas com React.js, Next.js, TypeScript, JavaScript e Tailwind CSS. Experiência com React Query, Zustand, Design Systems, SSR, SSG, SEO técnico e Core Web Vitals, além de aplicações mobile com React Native e Expo para iOS e Android. Testes de componentes e fluxos com Jest, React Testing Library e Cypress.",
     },
     {
       id: "02",
-      title: "Back-end escalável com Node.js e NestJS",
+      title: "Back-End",
+      subtitle: "APIs, integrações e regras de negócio",
       description:
-        "Desenvolvimento de APIs REST com arquitetura modular, validação, organização por domínio e foco em manutenção para sustentar aplicações de médio e grande porte.",
+        "Criação e integração de APIs REST com Node.js, NestJS e Fastify, incluindo autenticação, autorização, validação, regras de negócio, serviços externos e APIs de pagamento. Experiência complementar com Java e Spring Boot e conhecimentos práticos em C#, .NET e Entity Framework, incluindo testes unitários e de integração no Back-End.",
     },
     {
       id: "03",
-      title: "Autenticação e integração com bancos de dados",
+      title: "Banco de Dados",
+      subtitle: "Modelagem, consultas e persistência",
       description:
-        "Implementação de autenticação segura, controle de acesso e integração com bancos de dados relacionais e não relacionais, mantendo consistência e boa observabilidade.",
+        "Modelagem e integração de dados com PostgreSQL, MySQL, MongoDB e SQL Server, além de consultas SQL, Prisma ORM, Redis e Entity Framework. Organização de estruturas relacionais e não relacionais para aplicações web, mobile e APIs.",
     },
     {
       id: "04",
-      title: "SEO técnico e performance web",
+      title: "AI",
+      subtitle: "Desenvolvimento assistido por Inteligência Artificial",
       description:
-        "Otimização de Core Web Vitals, metadata SEO, renderização híbrida e carregamento inteligente de assets para melhorar descoberta orgânica e velocidade real de navegação.",
+        "Uso prático de Codex e Claude no VS Code para acelerar o desenvolvimento, analisar código, investigar e resolver bugs, apoiar refatorações, gerar componentes, APIs, testes e documentação, revisar implementações e avaliar possíveis melhorias de arquitetura, performance e manutenção.",
+      note:
+        "As sugestões geradas por IA são revisadas, testadas e validadas tecnicamente antes de serem incorporadas ao produto.",
+    },
+    {
+      id: "05",
+      title: "DevOps",
+      subtitle: "Automação e fluxo de entrega",
+      description:
+        "Versionamento e colaboração com Git e GitHub, organização de branches, code review e containerização com Docker. Automação de lint, testes, build e deploy por meio de CI/CD e GitHub Actions, contribuindo para entregas mais consistentes e seguras.",
+    },
+    {
+      id: "06",
+      title: "Cloud",
+      subtitle: "Publicação e ambientes de produção",
+      description:
+        "Publicação e manutenção de aplicações em AWS e Vercel, configuração de ambientes, deploy, monitoramento e integração com fluxos de CI/CD, considerando performance, segurança e disponibilidade.",
     },
   ],
   projects: [
@@ -105,7 +119,7 @@ export const siteKnowledge = {
       tag: "Automação IA",
       title: "Inteligência que conecta",
       description:
-        "Soluções personalizadas para automarizar processos, econimizar tempo e impulsionar resultados.",
+        "Soluções personalizadas para automatizar processos, economizar tempo e impulsionar resultados.",
     },
     {
       tag: "Portfólio Profissional",
@@ -151,10 +165,10 @@ export const siteKnowledge = {
     "Produtos web/mobile",
   ],
   metrics: [
-    { value: "3+", label: "Anos de experiência" },
-    { value: "20+", label: "Projetos entregues" },
-    { value: "10+", label: "Clientes atendidos" },
-    { value: "100%", label: "Comprometido com resultados" },
+    { value: 3, suffix: "+", label: "Anos de experiência" },
+    { value: 20, suffix: "+", label: "Projetos entregues" },
+    { value: 10, suffix: "+", label: "Clientes atendidos" },
+    { value: 100, suffix: "%", label: "Comprometido com resultados" },
   ],
   specialties: [
     {
@@ -190,7 +204,6 @@ export const siteKnowledge = {
     linkedin: "https://www.linkedin.com/in/wesleyfariasbe/",
     instagram: "https://www.instagram.com/visualswf/",
     github: "https://github.com/WesleyFariasB",
-    site: "Site profissional de Wesley Farias preparado para deploy serverless na Vercel",
   },
   projectObjective:
     "Apresentar serviços, experiência e projetos com posicionamento de Desenvolvedor Full Stack voltado para aplicações web modernas, performáticas, escaláveis e otimizadas para SEO.",
@@ -216,12 +229,13 @@ export function formatSiteKnowledgeForPrompt() {
     `Diferenciais: ${siteKnowledge.profile.differentiators.join("; ")}`,
     `Metadados: ${siteKnowledge.metadata.title}. ${siteKnowledge.metadata.description}`,
     `Objetivo do projeto: ${siteKnowledge.projectObjective}`,
-    `Sinal de confiança: ${siteKnowledge.trustSignals.join(" | ")}`,
     `Métricas: ${siteKnowledge.metrics
-      .map((metric) => `${metric.value} ${metric.label}`)
+      .map((metric) => `${metric.value}${metric.suffix} ${metric.label}`)
       .join("; ")}`,
     `Serviços: ${siteKnowledge.services
-      .map((service) => `${service.title}: ${service.description}`)
+      .map((service) =>
+        `${service.title}: ${service.description}${"note" in service ? ` ${service.note}` : ""}`,
+      )
       .join(" | ")}`,
     `Projetos: ${siteKnowledge.projects
       .map((project) => `${project.title} (${project.tag}): ${project.description}`)

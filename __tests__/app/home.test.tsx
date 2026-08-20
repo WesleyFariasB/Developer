@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Home from "@/app/page";
 
@@ -8,7 +8,7 @@ const renderLoadedHome = async () => {
   return screen.findByRole(
     "heading",
     {
-      name: /transformo ideias em sites, sistemas e aplicativos/i,
+      name: /transformo ideias em sites sistemas e aplicativos de alta performance/i,
     },
     { timeout: 2500 },
   );
@@ -54,5 +54,46 @@ describe("Home page", () => {
     await user.click(button);
 
     expect(window.scrollTo).toHaveBeenCalledWith({ behavior: "smooth", top: 0 });
+  });
+
+  it("renders the six solution cards and the accessible technology marquee", async () => {
+    await renderLoadedHome();
+
+    const services = screen.getByRole("region", {
+      name: /soluções digitais completas para produtos/i,
+    });
+    const marquee = screen.getByRole("region", { name: /tecnologias principais/i });
+
+    expect(within(services).getAllByRole("article")).toHaveLength(6);
+    expect(within(marquee).getAllByRole("listitem")).toHaveLength(22);
+    expect(within(services).getByRole("heading", { name: "AI" })).toBeInTheDocument();
+    expect(within(services).getByText(/Codex e Claude no VS Code/i)).toBeInTheDocument();
+  });
+
+  it("renders the professional timeline and the final contact section", async () => {
+    await renderLoadedHome();
+
+    const timeline = screen.getByRole("region", {
+      name: /da formação à construção de produtos digitais/i,
+    });
+    const footer = screen.getByRole("contentinfo", {
+      name: /vamos construir o que vem a seguir/i,
+    });
+
+    expect(within(timeline).getAllByRole("article")).toHaveLength(5);
+    expect(within(timeline).getByRole("link", { name: /vamos conversar/i })).toHaveAttribute(
+      "href",
+      "#contato",
+    );
+    expect(within(footer).getByRole("link", { name: /enviar e-mail para wesley farias/i })).toHaveAttribute(
+      "href",
+      "mailto:wesleyfariasbe@gmail.com",
+    );
+    expect(within(footer).getByText(/engenheiro de software/i)).toBeInTheDocument();
+    expect(within(footer).getByRole("link", { name: /baixar currículo/i })).toHaveAttribute(
+      "href",
+      "/curriculo-wesley-farias.pdf",
+    );
+    expect(document.querySelectorAll("footer")).toHaveLength(1);
   });
 });

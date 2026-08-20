@@ -10,8 +10,9 @@ module.exports = {
         fog: "#e9e9e9"
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        heading: ["Montserrat", "Inter", "sans-serif"],
+        sans: ["var(--font-primary)", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
+        heading: ["var(--font-primary)", "sans-serif"],
       },
       boxShadow: {
         card: "0 18px 45px rgba(17,17,17,0.06)",
