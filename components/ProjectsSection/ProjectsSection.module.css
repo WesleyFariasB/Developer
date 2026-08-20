@@ -173,7 +173,7 @@
 }
 
 .imageFrame :global(img) {
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   transition: transform 450ms ease;
 }
@@ -236,7 +236,10 @@
   background: #ffffff;
   border-radius: 1.5rem;
   color: #111111;
-  max-height: calc(100dvh - 3rem);
+  display: grid;
+  gap: 1rem;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  height: min(46rem, calc(100dvh - 3rem));
   max-width: 64rem;
   overflow: auto;
   padding: clamp(1.25rem, 3vw, 2rem);
@@ -295,9 +298,23 @@
 }
 
 .modalImage {
+  align-items: center;
+  background: #f8fafc;
+  display: flex;
+  height: 100%;
+  justify-content: center;
   margin-top: 1.5rem;
+  min-height: 0;
   overflow: hidden;
   position: relative;
+}
+
+.modalImageAsset {
+  height: 100%;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  width: 100%;
 }
 
 .previousButton,
@@ -317,6 +334,7 @@
   display: flex;
   gap: 0.5rem;
   margin-top: 1rem;
+  min-height: 4.25rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
 }
@@ -372,6 +390,20 @@
   .cardCopy { min-height: 20rem; }
 
   .imageFrame { aspect-ratio: 1.13 / 1; }
+
+  .modal {
+    height: calc(100dvh - 2rem);
+    padding: 1rem;
+  }
+
+  .modalImage {
+    margin-top: 0;
+  }
+
+  .thumbnails,
+  .modalHelp {
+    margin-top: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -256,7 +256,7 @@ export default function ProjectsSection() {
                 width={1600}
                 height={900}
                 sizes="90vw"
-                className="max-h-[72vh] w-full object-contain"
+                className={styles.modalImageAsset}
                 quality={95}
               />
               {activeProject.images.length > 1 && (

@@ -40,7 +40,6 @@
 .portrait {
   align-self: start;
   aspect-ratio: 4 / 5;
-  border: 1px solid rgb(255 255 255 / 38%);
   grid-column: 2;
   grid-row: 2;
   margin: 0;
@@ -145,7 +144,7 @@
   align-items: stretch;
   display: flex;
   flex-wrap: wrap;
-  gap: 1.25rem clamp(1.25rem, 3vw, 2.5rem);
+  gap: 1.25rem clamp(1.25rem, 2.25vw, 2rem);
   margin-top: clamp(2rem, 4vw, 3.5rem);
 }
 
@@ -201,7 +200,7 @@
   align-items: stretch;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  gap: 0.5rem clamp(1.25rem, 1.8vw, 1.5rem);
   list-style: none;
   margin: 0;
   padding: 0;
