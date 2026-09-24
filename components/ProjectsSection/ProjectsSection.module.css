@@ -122,26 +122,27 @@
 
 .projectName {
   color: #1e3a8a;
-  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  font-size: clamp(1.3rem, 1.8vw, 1.7rem);
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.035em;
+  line-height: 1.22;
 }
 
 .summary {
-  color: #10213e;
-  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
-  font-weight: 650;
-  letter-spacing: -0.052em;
-  line-height: 1.08;
-  max-width: 24ch;
+  color: #475569;
+  font-size: clamp(0.95rem, 1.1vw, 1.0625rem);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.55;
+  max-width: 100%;
 }
 
 .technologies,
 .placeholderNote {
   color: #64748b;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   letter-spacing: 0.01em;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .cta {
