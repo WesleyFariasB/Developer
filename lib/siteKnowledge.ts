@@ -122,22 +122,16 @@ export const siteKnowledge = {
         "Soluções personalizadas para automatizar processos, economizar tempo e impulsionar resultados.",
     },
     {
-      tag: "Portfólio Profissional",
-      title: "Donkere",
-      description:
-        "Portfólio visual para marca criativa com narrativa, impacto e apresentação de serviços.",
-    },
-    {
       tag: "Sistema",
       title: "Software de gestão empresarial",
       description:
         "Centraliza e integra todos os dados, processos e setores de uma empresa em uma única plataforma, automatizando rotinas e facilitando a tomada de decisões.",
     },
     {
-      tag: "Blog",
-      title: "Amalfis",
+      tag: "SAAS HEALTHCARE",
+      title: "HealthCloud",
       description:
-        "Blog institucional com hierarquia visual, leitura fluida e estrutura preparada para conteúdo.",
+        "Plataforma SaaS White Label para gestão de clínicas, profissionais e operações de saúde. Desenvolvida com React Native, Expo e ASP.NET Core, com arquitetura multi-tenant, autenticação segura, agenda inteligente e gestão completa da operação. Tecnologias: React Native, Expo, TypeScript, ASP.NET Core, PostgreSQL, Redis e Async Storage.",
     },
   ],
   stack: [

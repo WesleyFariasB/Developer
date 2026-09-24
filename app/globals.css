@@ -582,7 +582,7 @@ h6 {
   align-items: center;
   background: rgb(255 255 255 / 96%);
   border: 1px solid rgb(37 99 235 / 15%);
-  border-radius: 999px;
+  border-radius: 0.5rem;
   box-shadow: 0 20px 54px rgb(17 17 17 / 16%);
   color: #111111;
   display: flex;
@@ -1369,7 +1369,7 @@ h6 {
 .hero-budget {
   background: #111827;
   border: 1px solid #111827;
-  border-radius: 999px;
+  border-radius: 0.5rem;
   color: #ffffff;
   font-size: 0.82rem;
   font-weight: 700;
@@ -1396,7 +1396,7 @@ h6 {
 
 .hero-social-links a {
   border: 1px solid rgb(15 23 42 / 12%);
-  border-radius: 999px;
+  border-radius: 0.5rem;
   color: #334155;
   font-size: 0.72rem;
   font-weight: 650;

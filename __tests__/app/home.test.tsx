@@ -22,21 +22,27 @@ describe("Home page", () => {
     expect(screen.getByRole("link", { name: /fale comigo/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /solicitar orçamento/i })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: /projetos em destaque/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /abrir projeto paula corrêa/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /abrir projeto plataforma saas white label/i })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: /projetos em destaque/i })).getAllByRole("button", { name: /abrir projeto/i })).toHaveLength(5);
   });
 
   it("opens and closes a project gallery by keyboard-accessible buttons", async () => {
     const user = userEvent.setup();
     await renderLoadedHome();
 
-    await user.click(screen.getByRole("button", { name: /abrir projeto paula corrêa/i }));
+    await user.click(screen.getByRole("button", { name: /abrir projeto plataforma saas white label/i }));
 
-    expect(screen.getByRole("dialog", { name: /paula corrêa/i })).toBeInTheDocument();
+    const gallery = screen.getByRole("dialog", { name: /plataforma saas white label/i });
+    expect(within(gallery).getAllByAltText("HealthCloud — visão principal")[0]).toHaveAttribute("src", "/images/HealthCloud_01.png");
+    const thumbnails = within(gallery).getAllByRole("button", { name: /abrir imagem \d de plataforma saas white label/i });
+    expect(thumbnails.map((button) => within(button).getByRole("img").getAttribute("src"))).toEqual(
+      [1, 2, 3, 4, 5].map((index) => `/images/HealthCloud_0${index}.png`),
+    );
     expect(screen.getByRole("button", { name: /fechar galeria/i })).toHaveFocus();
 
     await user.click(screen.getByRole("button", { name: /fechar galeria/i }));
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: /paula corrêa/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: /plataforma saas white label/i })).not.toBeInTheDocument();
     });
   });
 

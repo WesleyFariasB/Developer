@@ -28,50 +28,55 @@ export default function ProjectsSection() {
     if (!section || reducedMotion()) return undefined;
 
     gsap.registerPlugin(ScrollTrigger);
-    const context = gsap.context(() => {
-      cardRefs.current.forEach((card) => {
-        if (!card) return;
-        const cardContent = card.firstElementChild;
-        if (!(cardContent instanceof HTMLElement)) return;
+    const media = gsap.matchMedia();
+    media.add("(min-width: 800px)", () => {
+      const context = gsap.context(() => {
+        cardRefs.current.forEach((card) => {
+          if (!card) return;
+          const cardContent = card.firstElementChild;
+          if (!(cardContent instanceof HTMLElement)) return;
 
-        gsap.fromTo(
-          cardContent,
-          { autoAlpha: 0.35 },
-          {
-            autoAlpha: 1,
-            ease: "none",
-            scrollTrigger: {
-              end: "top 58%",
-              invalidateOnRefresh: true,
-              scrub: 0.2,
-              start: "top bottom",
-              trigger: card,
+          gsap.fromTo(
+            cardContent,
+            { autoAlpha: 0.35 },
+            {
+              autoAlpha: 1,
+              ease: "none",
+              scrollTrigger: {
+                end: "top 58%",
+                invalidateOnRefresh: true,
+                scrub: 0.2,
+                start: "top bottom",
+                trigger: card,
+              },
             },
-          },
-        );
+          );
 
-        ScrollTrigger.create({
-          end: "bottom bottom",
-          endTrigger: section,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-          pinType: "fixed",
-          pin: card,
-          pinSpacing: false,
-          start: "center center",
-          trigger: card,
+          ScrollTrigger.create({
+            end: "bottom bottom",
+            endTrigger: section,
+            invalidateOnRefresh: true,
+            anticipatePin: 1,
+            pinType: "fixed",
+            pin: card,
+            pinSpacing: false,
+            start: "center center",
+            trigger: card,
+          });
         });
-      });
-    }, section);
+      }, section);
 
-    const refresh = () => ScrollTrigger.refresh();
-    window.addEventListener("load", refresh);
-    void document.fonts?.ready.then(refresh);
+      const refresh = () => ScrollTrigger.refresh();
+      window.addEventListener("load", refresh);
+      void document.fonts?.ready.then(refresh);
 
-    return () => {
-      window.removeEventListener("load", refresh);
-      context.revert();
-    };
+      return () => {
+        window.removeEventListener("load", refresh);
+        context.revert();
+      };
+    });
+
+    return () => media.revert();
   }, []);
 
   const closeModal = useCallback(() => {

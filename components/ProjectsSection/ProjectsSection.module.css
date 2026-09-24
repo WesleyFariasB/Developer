@@ -58,7 +58,7 @@
 }
 
 .stickyItem {
-  --card-height: min(35rem, 68svh);
+  --card-height: clamp(34rem, 68svh, 35rem);
   display: block;
   min-height: calc(var(--card-height) + 36vh);
   position: relative;
@@ -72,7 +72,7 @@
 .card {
   background: #ffffff;
   border: 1px solid rgb(37 99 235 / 15%);
-  border-radius: clamp(1.25rem, 2vw, 1.8rem);
+  border-radius: 0.5rem;
   box-shadow: 0 24px 64px rgb(30 64 175 / 10%);
   height: var(--card-height);
   overflow: hidden;
@@ -129,7 +129,7 @@
 
 .summary {
   color: #10213e;
-  font-size: clamp(1.35rem, 2.5vw, 2.25rem);
+  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
   font-weight: 650;
   letter-spacing: -0.052em;
   line-height: 1.08;

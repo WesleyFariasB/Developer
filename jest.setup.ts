@@ -13,6 +13,7 @@ jest.mock("gsap", () => {
         return { revert: jest.fn() };
       },
       fromTo: jest.fn(),
+      matchMedia: jest.fn(() => ({ add: jest.fn(), revert: jest.fn() })),
       registerPlugin: jest.fn(),
       set: jest.fn(),
       timeline: jest.fn(() => timeline),
